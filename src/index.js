@@ -3,7 +3,6 @@
 
 const ADMIN_PIN = "1234";  // Change this to your PIN
 const ADMIN_ID = 989358143;
-const TELEGRAM_API = 'https://api.telegram.org/bot' + undefined;  // Will use env.BOT_TOKEN
 
 // Default keywords - stored in KV so they can be updated
 const DEFAULT_KEYWORDS = {
@@ -384,10 +383,10 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const pathname = url.pathname;
+    const pathname = url.pathname.toLowerCase();
 
-    // Admin Dashboard
-    if (pathname === '/admin' || pathname === '/admin/') {
+    // Admin Dashboard - Handle /admin requests
+    if (pathname.includes('admin')) {
       const pin = url.searchParams.get('pin') || '';
       if (!pin || pin !== ADMIN_PIN) {
         return new Response(`
