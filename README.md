@@ -1,6 +1,15 @@
-# PSOTS Telegram Moderation Bot
+# PSOTS Telegram Moderation Bot — Cloudflare Workers Edition
 
-A smart moderation bot for the PSOTS (Prestige Song of the South) Telegram group that auto-moderates based on group guidelines.
+A **completely maintenance-free** moderation bot running on Cloudflare Workers. Deploy once and forget — no servers to manage, 24/7 uptime, always free.
+
+## Why Cloudflare Workers?
+
+✅ **Zero Maintenance** — Deploy and forget  
+✅ **Always Free** — Generous free tier  
+✅ **Always Online** — 99.99% uptime SLA  
+✅ **Global Network** — Instant everywhere  
+✅ **Auto-Scaling** — Handles traffic spikes  
+✅ **One Command Deploy** — `wrangler deploy`
 
 ## Features
 
@@ -9,271 +18,222 @@ A smart moderation bot for the PSOTS (Prestige Song of the South) Telegram group
 - Political content filtering
 - Religious content filtering (with approved events)
 - Abusive language and personal attacks detection
-- Spam and unsolicited promotions detection
+- Spam/Unsolicited promotions
 
-✅ **Violation Tracking**
-- Per-user violation count tracking
-- Full violation history stored in `violations.json`
-- Auto-reset after 30 days of inactivity
-- Persistent deletion logs
+✅ **Persistent Storage**
+- Cloudflare KV for violation tracking
+- Auto-reset after 30 days
+- Audit logs for all deleted messages
 
 ✅ **Smart Detection**
 - Skips admin messages
-- Allows approved community events (Diwali, Holi, Chhath Puja, etc.)
-- Context-aware detection (₹ symbol allowed for society fees)
+- Approved community events (Diwali, Holi, etc.)
+- Context-aware (₹ allowed for society fees)
 
-✅ **Admin Commands** (only for admin user)
-- `/violations @username` - View violation history
-- `/reset @username` - Reset violation count
-- `/warn @username reason` - Manually warn a user
-- `/status` - Show bot uptime and violations handled
-- `/top` - Show top 5 most warned users
+✅ **Admin Commands** (DM only)
+- `/violations @username` — View violation history
+- `/reset @username` — Reset violation count
+- `/status` — Bot status
+- `/top` — Top 5 violators
 
-✅ **Warning System**
-- First violation: Polite warning message
-- Second violation: Second reminder with escalation notice
-- Third violation: Final warning + admin alert
+✅ **3-Strike System**
+- 1st violation: Warning
+- 2nd violation: Escalation reminder
+- 3rd violation: Final warning + admin alert
 
-## Installation
+---
 
-### Step 1: Clone/Setup Project
+## 🚀 Quick Deploy (5 minutes)
+
+### Step 1: Install Wrangler CLI
 ```bash
-cd psots
-npm install
+npm install -g wrangler
 ```
 
-### Step 2: Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your values:
+### Step 2: Create Cloudflare Account
+1. Sign up at https://dash.cloudflare.com (free)
+2. Go to **Workers & Pages** → **KV** 
+3. Create TWO namespaces:
+   - `psots-violations`
+   - `psots-audit-log`
+4. Copy their IDs
 
+### Step 3: Update wrangler.toml
+Edit `wrangler.toml` and replace:
+```toml
+[[kv_namespaces]]
+binding = "VIOLATIONS"
+id = "paste_your_violations_namespace_id_here"
+
+[[kv_namespaces]]
+binding = "AUDIT_LOG"
+id = "paste_your_audit_namespace_id_here"
+```
+
+### Step 4: Set Bot Token Secret
 ```bash
-cp .env.example .env
+wrangler secret put BOT_TOKEN
+# Paste your bot token when prompted
 ```
 
-Edit `.env`:
-```
-BOT_TOKEN=your_bot_token_here
-ADMIN_ID=your_telegram_user_id_here
-```
-
-### Step 3: Get Your Bot Token
-1. Message [@BotFather](https://t.me/BotFather) on Telegram
-2. Use `/mybots` → select your bot → API Token
-3. Copy the token and paste in `.env`
-
-### Step 4: Get Your Telegram User ID
-1. Message [@userinfobot](https://t.me/userinfobot) on Telegram
-2. It will show your user ID
-3. Copy and paste in `.env`
-
-## Running the Bot
-
-### Locally
+### Step 5: Deploy
 ```bash
-npm start
+wrangler deploy
 ```
 
-You should see: `🤖 PSOTS Moderation Bot started successfully!`
+You'll get a URL like: `https://psots-telegram-bot.yourname.workers.dev`
 
-### Adding Bot to Group
+### Step 6: Set Telegram Webhook
+Replace the URL and token:
+```bash
+curl "https://api.telegram.org/bot8526973206:AAEJnvI4_bkJCDE-7q94E-HZl-YLabtQdcI/setWebhook?url=https://psots-telegram-bot.yourname.workers.dev"
+```
 
-1. Open your PSOTS Owners Group
-2. Click on the group name → Add Members
-3. Search for `@psots_telegram_bot` and add it
-4. Make it an admin with these permissions:
-   - ✅ Delete messages
-   - ✅ Ban users
-   - ❌ Post messages
-   - ❌ Pin messages
+Expected response:
+```json
+{"ok":true,"result":true,"description":"Webhook was set"}
+```
 
-### Testing (Recommended First)
+### Step 7: Add Bot to Group
+1. Open PSOTS Owners Group
+2. Add `@psots_telegram_bot` as admin
+3. Give permissions: Delete messages ✅, Ban users ✅
+4. Done! ✅
 
-1. Create a private test group
-2. Add the bot as admin (same permissions as above)
-3. Test messages:
-   - "I want to sell my old car" → Should be deleted
-   - "Vote for BJP" → Should be deleted
-   - "Happy Diwali!" → Should NOT be deleted
-   - "Monthly CAM charges: ₹5000" → Should NOT be deleted
-4. Check that the bot sends warning DMs to the user
-5. Verify admin receives alert after 3 violations
+---
+
+## Testing (Before Production)
+
+Create a private test group and:
+```
+Message 1: "I want to sell my car" → Deleted + Warning DM
+Message 2: "Vote for BJP" → Deleted + Warning DM
+Message 3: "Happy Diwali!" → NOT deleted ✅
+Message 4: "CAM charges ₹5000" → NOT deleted ✅
+```
+
+After 3 violations from same user, you should receive admin alert.
+
+---
 
 ## File Structure
 
 ```
 psots/
-├── index.js                — Main bot logic and command handlers
-├── keywords.js             — Keyword lists for all violation types
-├── violations.json         — Violation tracking (auto-created)
-├── deleted_messages.json   — Log of deleted messages (auto-created)
-├── .env                    — Bot token and admin ID (KEEP SECRET)
-├── .env.example            — Template for .env
+├── src/
+│   └── index.js            — Main bot (Cloudflare Worker)
+├── wrangler.toml           — Cloudflare config
 ├── package.json            — Dependencies
 └── README.md               — This file
 ```
 
-## Deployment Options
-
-### Option 1: Railway.app (Recommended)
-
-1. Create account at [railway.app](https://railway.app)
-2. Create new project → Import from GitHub
-3. Add this repository
-4. Add environment variables in Railway dashboard:
-   - `BOT_TOKEN`
-   - `ADMIN_ID`
-5. Deploy
-
-### Option 2: Render.com
-
-1. Create account at [render.com](https://render.com)
-2. Create new Web Service
-3. Connect your GitHub repo
-4. Set build command: `npm install`
-5. Set start command: `npm start`
-6. Add environment variables
-7. Deploy
-
-### Option 3: Heroku (Free tier ended, but still available)
-
-1. Install Heroku CLI
-2. Run: `heroku login`
-3. Create app: `heroku create psots-bot`
-4. Set environment: 
-   ```bash
-   heroku config:set BOT_TOKEN=your_token
-   heroku config:set ADMIN_ID=your_id
-   ```
-5. Deploy: `git push heroku main`
-
-### Option 4: VPS/Server
-
-1. Install Node.js on your server
-2. Clone this repository
-3. Create `.env` file with credentials
-4. Install PM2 for 24/7 uptime:
-   ```bash
-   npm install -g pm2
-   pm2 start index.js --name "psots-bot"
-   pm2 save
-   pm2 startup
-   ```
+---
 
 ## Moderation Rules
 
-### 1. Buy/Sell Content
-**Flagged Keywords:** sell, buy, rent, price, ₹, rs., DM me, WhatsApp me, available for sale, second hand
-
-### 2. Political Content
-**Flagged Keywords:** BJP, Congress, AAP, election, vote, Modi, CM, government policy, protest, rally
-
-### 3. Religious Content
-**Flagged Keywords:** temple donation, mosque, church collection, prayer meeting
-**NOT Flagged:** Chhath Puja, Diwali, Holi, Navratri, Eid (approved community events)
-
-### 4. Personal Attacks / Foul Language
-**Flagged:** Abusive words in Hindi and English, direct personal attacks
-
-### 5. Spam / Unsolicited Promotions
-**Flagged Keywords:** discount, offer, limited time, click here, refer a friend, earn money, business opportunity
-
-## Admin Commands
-
-### View Violation History
-```
-/violations @username
-```
-Shows violation count and recent violations for a user.
-
-### Reset Violations
-```
-/reset @username
-```
-Resets violation count to zero for a user.
-
-### Manual Warning
-```
-/warn @username reason
-```
-Manually warn a user (counts as a violation).
-
-### Bot Status
-```
-/status
-```
-Shows bot uptime and violations handled today.
-
-### Top Violators
-```
-/top
-```
-Shows top 5 most warned users this month.
-
-## Data Files
-
-### violations.json
-Stores all user violations:
-```json
-{
-  "123456": {
-    "userId": 123456,
-    "username": "john_doe",
-    "count": 2,
-    "lastViolationTime": 1234567890,
-    "history": [
-      {
-        "type": "Buy/Sell Content",
-        "timestamp": "2024-01-15T10:30:00Z"
-      }
-    ]
-  }
-}
-```
-
-### deleted_messages.json
-Logs of all deleted messages for audit trail:
-```json
-[
-  {
-    "userId": 123456,
-    "username": "john_doe",
-    "firstName": "John",
-    "violationType": "Buy/Sell Content",
-    "messageText": "Selling old laptop...",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "chatId": -1001234567890
-  }
-]
-```
-
-## Important Notes
-
-- **Keep `.env` secret** — Never commit it to GitHub
-- **Bot token is sensitive** — It allows anyone to control your bot
-- **Admin ID verification** — Only messages from your admin ID trigger admin commands
-- **Violation history is permanent** — Full logs are kept for audit purposes
-- **30-day reset** — Violation counts reset after 30 days of no new violations
-
-## Troubleshooting
-
-### Bot not responding
-- Check bot token is correct in `.env`
-- Check bot is added to the group as admin
-- Restart the bot process
-
-### Commands not working
-- Verify you're using the correct admin ID
-- Commands are only available in DMs to the bot
-- Use proper command format: `/violations @username`
-
-### Messages not being deleted
-- Check bot has delete permissions in group
-- Check message text contains the violation keywords
-- Bot skips messages from group admins
-
-## Support
-
-For issues or feature requests, contact the PSOTS bot administrator.
+| Category | Flagged Keywords | Exceptions |
+|----------|-----------------|------------|
+| Buy/Sell | sell, buy, rent, price, ₹, rs., DM me, WhatsApp me | CAM/maintenance charges |
+| Political | BJP, Congress, AAP, election, vote, Modi, CM, rally | None |
+| Religious | temple, mosque, church, prayer | Diwali, Holi, Chhath Puja, Eid |
+| Spam | discount, offer, limited time, click here, earn money | None |
+| Abusive | Common Hindi/English slurs + personal attacks | None |
 
 ---
 
-**Built for Prestige Song of the South — psots.in**
+## Admin Commands
+
+All commands work via **DM only** to the bot.
+
+### `/violations @username`
+Shows violation count and recent violations for a user.
+
+### `/reset @username`
+Resets violation count to zero.
+
+### `/status`
+Shows if bot is online and handling violations.
+
+### `/top`
+Shows top 5 most warned users.
+
+---
+
+## Storage Details
+
+**Cloudflare KV Free Tier (per day):**
+- 100,000 reads → You use ~10-50
+- 10,000 writes → You use ~5-20
+- 1 GB storage → You use <1 MB
+
+**Cost:** $0 (stays free forever for this use case)
+
+Data stored:
+- Violation history per user
+- Audit logs of deleted messages
+- All data auto-expires after 30/90 days
+
+---
+
+## Troubleshooting
+
+**Bot not responding?**
+1. Check webhook was set correctly:
+```bash
+curl "https://api.telegram.org/bot8526973206:AAEJnvI4_bkJCDE-7q94E-HZl-YLabtQdcI/getWebhookInfo"
+```
+
+2. Check bot has delete permissions in group
+
+**Commands not working?**
+- Must be DM from admin user ID (989358143)
+- Commands sent in group won't work
+
+**Want to see logs?**
+```bash
+wrangler tail
+```
+
+---
+
+## Updating the Bot
+
+To update code:
+```bash
+# Edit src/index.js
+git add src/index.js
+git commit -m "Update bot logic"
+wrangler deploy
+```
+
+---
+
+## FAQ
+
+**Q: Will this cost money?**  
+A: No. Free Cloudflare Workers tier is enough for PSOTS.
+
+**Q: What if the bot goes down?**  
+A: Cloudflare has 99.99% SLA. It won't.
+
+**Q: Can I use this for multiple groups?**  
+A: Yes, modify the code to handle multiple chat IDs.
+
+**Q: How do I delete/reset everything?**  
+A: Go to Cloudflare Dashboard → Workers → KV → Delete namespaces.
+
+**Q: Can I export violation history?**  
+A: Yes, from Cloudflare Dashboard → KV → Data.
+
+---
+
+## Support
+
+Need help?
+- Read [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
+- Check [Telegram Bot API Docs](https://core.telegram.org/bots/api)
+
+---
+
+**Built for Prestige Song of the South — psots.in**  
+**Maintenance-free moderation since 2024** ✅
