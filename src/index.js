@@ -169,8 +169,384 @@ async function getChatMember(chatId, userId, token) {
   }
 }
 
-// ADMIN DASHBOARD HTML
-const ADMIN_DASHBOARD = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>PSOTS Admin</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;color:#333}header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px;display:flex;justify-content:space-between;align-items:center}.container{max-width:1000px;margin:0 auto;padding:20px}.tabs{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}.tab-btn{padding:12px 24px;background:white;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.3s}.tab-btn.active{background:#667eea;color:white;border-color:#667eea}.content{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.tab{display:none}.tab.active{display:block}.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}.status-card{background:#f9f9f9;padding:20px;border-radius:8px;border-left:4px solid #667eea}.status-card h3{color:#667eea;margin-bottom:10px}.status-card .number{font-size:28px;font-weight:bold;color:#333}.user-item{background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:10px;border-left:4px solid #667eea}.btn{padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600}.btn:hover{background:#764ba2}.btn-danger{background:#e74c3c}.input-group{margin-bottom:15px}.input-group label{display:block;margin-bottom:5px;font-weight:600}.input-group input,.input-group select{width:100%;padding:12px;border:1px solid #ddd;border-radius:6px}@media(max-width:600px){.container{padding:10px}.tabs{gap:5px}.tab-btn{padding:10px 15px;font-size:13px}}</style></head><body><header><h1>🤖 PSOTS Admin Dashboard</h1><button class="btn btn-danger" onclick="logout()">Logout</button></header><div class="container"><div class="tabs"><button class="tab-btn active" onclick="switchTab('status')">📊 Status</button><button class="tab-btn" onclick="switchTab('violations')">⚠️ Violations</button><button class="tab-btn" onclick="switchTab('keywords')">🔑 Keywords</button><button class="tab-btn" onclick="switchTab('admins')">👥 Admins</button><button class="tab-btn" onclick="switchTab('logs')">📝 Logs</button></div><div id="status" class="tab active"><h2>📊 Bot Status & Statistics</h2><div class="status-grid"><div class="status-card"><h3>Messages Scanned</h3><div class="number" id="scanned">0</div></div><div class="status-card"><h3>Violations (30 days)</h3><div class="number" id="violations-count">0</div></div><div class="status-card"><h3>Users Tracked</h3><div class="number" id="users-count">0</div></div><div class="status-card"><h3>Admins</h3><div class="number" id="admins-count">0</div></div></div></div><div id="violations" class="tab"><h2>⚠️ User Violations (Last 30 Days)</h2><div id="violationsList">Loading...</div></div><div id="keywords" class="tab"><h2>🔑 Manage Keywords</h2><div class="input-group"><label>Category:</label><select id="categorySelect" onchange="loadKeywordsForCategory()"><option value="buySell">Buy/Sell</option><option value="political">Political</option><option value="religious">Religious</option><option value="spam">Spam</option><option value="abuseEnglish">Abusive (EN)</option><option value="abuseHindi">Abusive (HI)</option><option value="personalAttacks">Personal Attacks</option></select></div><div id="keywordsList" style="margin-bottom:20px"></div><div class="input-group"><input type="text" id="newKeyword" placeholder="New keyword"><button class="btn" onclick="addKeyword()">Add</button></div></div><div id="admins" class="tab"><h2>👥 Admin Management</h2><div id="adminsList" style="margin-bottom:20px"></div><div class="input-group"><input type="email" id="newAdmin" placeholder="admin@email.com"><button class="btn" onclick="addAdmin()">Add Admin</button></div></div><div id="logs" class="tab"><h2>📝 Deleted Messages (Last 30 Days)</h2><div id="logsList">Loading...</div></div></div><script>const API="/api";function switchTab(t){document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active")),document.querySelectorAll(".tab-btn").forEach(e=>e.classList.remove("active")),document.getElementById(t).classList.add("active"),event.target.classList.add("active"),"status"===t&&loadStatus(),"violations"===t&&loadViolations(),"admins"===t&&loadAdmins(),"logs"===t&&loadLogs()}async function loadStatus(){try{const e=await fetch(API+"/status"),t=await e.json();document.getElementById("scanned").innerText=t.totalScanned||0,document.getElementById("violations-count").innerText=t.violations||0,document.getElementById("users-count").innerText=t.users||0,document.getElementById("admins-count").innerText=t.admins||0}catch(e){console.error(e)}}async function loadViolations(){try{const e=await fetch(API+"/violations"),t=await e.json();document.getElementById("violationsList").innerHTML=0===t.violations.length?"<p>No violations</p>":t.violations.map(e=>\`<div class="user-item"><strong>@\${e.username}</strong> - \${e.count} violations<br><small>\${e.history.slice(-3).map(e=>e.type).join(" • ")}</small><br><button class="btn btn-danger" style="margin-top:10px" onclick="resetUser('\${e.username}')">Reset</button></div>\`).join("")}catch(e){console.error(e)}}async function loadAdmins(){try{const e=await fetch(API+"/admins"),t=await e.json();document.getElementById("adminsList").innerHTML=t.admins.map(e=>\`<div class="user-item">\${e}<button class="btn btn-danger" style="float:right" onclick="removeAdmin('\${e}')">Remove</button></div>\`).join("")}catch(e){console.error(e)}}async function loadKeywordsForCategory(){try{const e=document.getElementById("categorySelect").value,t=await fetch(API+"/keywords"),a=await t.json();document.getElementById("keywordsList").innerHTML=(a.keywords[e]||[]).map(t=>\`<span style="display:inline-block;background:#667eea;color:white;padding:6px 12px;border-radius:20px;margin:5px 5px 5px 0;font-size:12px">\${t}<button style="background:none;border:none;color:white;cursor:pointer;margin-left:8px" onclick="removeKeyword('\${e}','\${t}')\">×</button></span>\`).join("")}catch(e){console.error(e)}}async function addKeyword(){const e=document.getElementById("categorySelect").value,t=document.getElementById("newKeyword").value.trim();if(!t)return alert("Enter keyword");try{await fetch(API+"/keywords",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({category:e,keyword:t,action:"add"})}),document.getElementById("newKeyword").value="",loadKeywordsForCategory()}catch(e){alert("Error adding keyword")}}async function removeKeyword(e,t){try{await fetch(API+"/keywords",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({category:e,keyword:t,action:"remove"})}),loadKeywordsForCategory()}catch(e){alert("Error removing keyword")}}async function addAdmin(){const e=document.getElementById("newAdmin").value.trim();if(!e)return alert("Enter email");try{await fetch(API+"/admins",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:e,action:"add"})}),document.getElementById("newAdmin").value="",loadAdmins()}catch(e){alert("Error adding admin")}}async function removeAdmin(e){if(!confirm(\`Remove \${e}?\`))return;try{await fetch(API+"/admins",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:e,action:"remove"})}),loadAdmins()}catch(e){alert("Error removing admin")}}async function resetUser(e){if(!confirm(\`Reset \${e}?\`))return;try{await fetch(API+"/violations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:e,action:"reset"})}),loadViolations()}catch(e){alert("Error resetting user")}}async function loadLogs(){try{const e=await fetch(API+"/logs"),t=await e.json();document.getElementById("logsList").innerHTML=0===t.logs.length?"<p>No logs</p>":t.logs.slice(0,50).map(e=>\`<div class="user-item"><strong>@\${e.username}</strong> - \${e.violationType}<br><small>"\${e.messageText.substring(0,60)}..."</small><br><small style="color:#999">\${new Date(e.timestamp).toLocaleString()}</small></div>\`).join("")}catch(e){console.error(e)}}function logout(){localStorage.removeItem("admin_token"),window.location.href="/admin"}loadStatus()</script></body></html>`;
+// ADMIN DASHBOARD HTML - Uses client-side Google Identity Services
+const GOOGLE_CLIENT_ID_VALUE = "774636811164-c9n9n8a27c9d0fbhg7e6vie759gq1sun.apps.googleusercontent.com";
+
+const ADMIN_DASHBOARD = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSOTS Admin</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;color:#333}
+#login-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#667eea,#764ba2)}
+.login-box{background:white;padding:40px;border-radius:16px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.login-box h1{font-size:22px;margin:16px 0 8px}
+.login-box p{color:#666;font-size:14px;margin-bottom:24px}
+#dashboard{display:none}
+header{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:20px}
+.user-info{font-size:13px;opacity:0.9;margin-right:10px}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+.tabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.tab-btn{padding:10px 18px;background:white;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;transition:all 0.2s}
+.tab-btn.active{background:#667eea;color:white;border-color:#667eea}
+.tab{display:none;background:white;padding:24px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+.tab.active{display:block}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#f8f0ff;padding:20px;border-radius:10px;border-left:4px solid #667eea;text-align:center}
+.stat-card h3{color:#667eea;font-size:13px;margin-bottom:8px}
+.stat-card .num{font-size:32px;font-weight:bold}
+.item{background:#f9f9f9;padding:14px;border-radius:8px;margin-bottom:10px;border-left:4px solid #667eea}
+.item strong{color:#667eea}
+.btn{padding:9px 18px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{background:#764ba2}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-red{background:#e74c3c}
+.input-row{display:flex;gap:8px;margin-bottom:12px}
+.input-row input,.input-row select{flex:1;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px}
+.tag{display:inline-block;background:#667eea;color:white;padding:5px 10px;border-radius:20px;margin:3px;font-size:12px}
+.tag button{background:none;border:none;color:white;cursor:pointer;margin-left:6px;font-size:14px}
+.settings-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.settings-card{background:#f9f9f9;padding:16px;border-radius:8px;border:1px solid #eee}
+.settings-card h3{color:#667eea;margin-bottom:12px;font-size:14px}
+.settings-card label{display:block;font-size:12px;color:#666;margin-bottom:4px;margin-top:8px}
+.settings-card input,.settings-card select{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px}
+@media(max-width:600px){.container{padding:10px}.tabs{gap:4px}.tab-btn{padding:8px 12px;font-size:12px}.settings-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:48px">🤖</div>
+    <h1>PSOTS Admin</h1>
+    <p>Sign in to manage the moderation bot</p>
+    <div id="g_id_onload"
+      data-client_id="${GOOGLE_CLIENT_ID_VALUE}"
+      data-callback="handleGoogleLogin"
+      data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-size="large"
+      data-theme="outline"
+      data-text="sign_in_with"
+      data-shape="rectangular"
+      data-logo_alignment="left">
+    </div>
+    <div id="auth-error" style="color:#e74c3c;font-size:13px;margin-top:12px;display:none">
+      ❌ Not authorized. Contact admin.
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <h1>🤖 PSOTS Admin Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="user-info" id="user-email"></span>
+      <button class="btn btn-red btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </header>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('status',this)">📊 Status</button>
+      <button class="tab-btn" onclick="switchTab('violations',this)">⚠️ Violations</button>
+      <button class="tab-btn" onclick="switchTab('keywords',this)">🔑 Keywords</button>
+      <button class="tab-btn" onclick="switchTab('admins',this)">👥 Admins</button>
+      <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ Settings</button>
+      <button class="tab-btn" onclick="switchTab('logs',this)">📝 Logs</button>
+    </div>
+
+    <div id="status" class="tab active">
+      <div class="status-grid">
+        <div class="stat-card"><h3>Messages Scanned</h3><div class="num" id="scanned">-</div></div>
+        <div class="stat-card"><h3>Violations (30d)</h3><div class="num" id="vcount">-</div></div>
+        <div class="stat-card"><h3>Users Tracked</h3><div class="num" id="ucount">-</div></div>
+        <div class="stat-card"><h3>Admins</h3><div class="num" id="acount">-</div></div>
+      </div>
+    </div>
+
+    <div id="violations" class="tab">
+      <h2 style="margin-bottom:16px">⚠️ Violations (Last 30 Days)</h2>
+      <div id="violationsList">Loading...</div>
+    </div>
+
+    <div id="keywords" class="tab">
+      <h2 style="margin-bottom:16px">🔑 Manage Keywords</h2>
+      <div class="input-row">
+        <select id="categorySelect" onchange="loadKeywordsForCategory()">
+          <option value="buySell">Buy/Sell</option>
+          <option value="political">Political</option>
+          <option value="religious">Religious</option>
+          <option value="spam">Spam</option>
+          <option value="abuseEnglish">Abusive (English)</option>
+          <option value="abuseHindi">Abusive (Hindi)</option>
+          <option value="personalAttacks">Personal Attacks</option>
+          <option value="approvedEvents">Approved Events ✅</option>
+          <option value="societyFees">Society Fees (Exempt ✅)</option>
+        </select>
+      </div>
+      <div id="keywordsList" style="margin-bottom:16px;min-height:40px"></div>
+      <div class="input-row">
+        <input type="text" id="newKeyword" placeholder="Add new keyword...">
+        <button class="btn" onclick="addKeyword()">Add</button>
+      </div>
+    </div>
+
+    <div id="admins" class="tab">
+      <h2 style="margin-bottom:16px">👥 Admin Management</h2>
+      <div id="adminsList" style="margin-bottom:16px"></div>
+      <div class="input-row">
+        <input type="email" id="newAdmin" placeholder="Add admin email...">
+        <button class="btn" onclick="addAdmin()">Add Admin</button>
+      </div>
+    </div>
+
+    <div id="settings" class="tab">
+      <h2 style="margin-bottom:16px">⚙️ Action Settings</h2>
+      <p style="color:#666;font-size:13px;margin-bottom:16px">Configure what happens at each violation count</p>
+      <div class="settings-row">
+        <div class="settings-card">
+          <h3>1st Violation</h3>
+          <label>Action</label>
+          <select id="action1"><option value="warn">Warn Only</option></select>
+          <label>Message</label>
+          <input type="text" id="msg1" placeholder="Warning message...">
+        </div>
+        <div class="settings-card">
+          <h3>2nd Violation</h3>
+          <label>Action</label>
+          <select id="action2"><option value="warn">Warn Only</option></select>
+          <label>Message</label>
+          <input type="text" id="msg2" placeholder="Warning message...">
+        </div>
+        <div class="settings-card">
+          <h3>3rd Violation</h3>
+          <label>Action</label>
+          <select id="action3">
+            <option value="warn">Warn Only</option>
+            <option value="mute" selected>Mute</option>
+            <option value="kick">Kick</option>
+            <option value="ban">Ban</option>
+          </select>
+          <label>Mute Duration (minutes)</label>
+          <input type="number" id="mute3" value="60" min="1">
+          <label>Message</label>
+          <input type="text" id="msg3" placeholder="Warning message...">
+        </div>
+        <div class="settings-card">
+          <h3>5th Violation</h3>
+          <label>Action</label>
+          <select id="action5">
+            <option value="warn">Warn Only</option>
+            <option value="mute">Mute</option>
+            <option value="kick" selected>Kick</option>
+            <option value="ban">Ban</option>
+          </select>
+          <label>Message</label>
+          <input type="text" id="msg5" placeholder="Warning message...">
+        </div>
+        <div class="settings-card">
+          <h3>10th Violation</h3>
+          <label>Action</label>
+          <select id="action10">
+            <option value="warn">Warn Only</option>
+            <option value="mute">Mute</option>
+            <option value="kick">Kick</option>
+            <option value="ban" selected>Ban Permanently</option>
+          </select>
+          <label>Message</label>
+          <input type="text" id="msg10" placeholder="Warning message...">
+        </div>
+      </div>
+      <button class="btn" onclick="saveSettings()">💾 Save Settings</button>
+      <div id="settings-msg" style="margin-top:10px;color:#27ae60;font-size:13px"></div>
+    </div>
+
+    <div id="logs" class="tab">
+      <h2 style="margin-bottom:16px">📝 Deleted Messages (Last 30 Days)</h2>
+      <div id="logsList">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let currentUserEmail = '';
+let allowedAdmins = [];
+
+// GOOGLE LOGIN HANDLER
+async function handleGoogleLogin(response) {
+  try {
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    const email = payload.email;
+
+    // Check if admin
+    const res = await fetch(API + '/admins');
+    const data = await res.json();
+    allowedAdmins = data.admins || [];
+
+    if (allowedAdmins.includes(email)) {
+      currentUserEmail = email;
+      document.getElementById('user-email').textContent = email;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadStatus();
+    } else {
+      document.getElementById('auth-error').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('auth-error').textContent = '❌ Login failed. Try again.';
+  }
+}
+
+function logout() {
+  google.accounts.id.disableAutoSelect();
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+function switchTab(t, btn) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  document.getElementById(t).classList.add('active');
+  btn.classList.add('active');
+  if(t==='status') loadStatus();
+  if(t==='violations') loadViolations();
+  if(t==='keywords') loadKeywordsForCategory();
+  if(t==='admins') loadAdmins();
+  if(t==='settings') loadSettings();
+  if(t==='logs') loadLogs();
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch(API+'/status');
+    const d = await r.json();
+    document.getElementById('scanned').textContent = d.totalScanned||0;
+    document.getElementById('vcount').textContent = d.violations||0;
+    document.getElementById('ucount').textContent = d.users||0;
+    document.getElementById('acount').textContent = d.admins||0;
+  } catch(e){}
+}
+
+async function loadViolations() {
+  try {
+    const r = await fetch(API+'/violations');
+    const d = await r.json();
+    document.getElementById('violationsList').innerHTML = !d.violations.length ? '<p style="color:#999">No violations recorded.</p>' :
+      d.violations.map(v => \`<div class="item"><strong>@\${v.username}</strong> — \${v.count} violations<br>
+      <small style="color:#888">\${(v.history||[]).slice(-3).map(h=>h.type).join(' • ')}</small>
+      <button class="btn btn-sm btn-red" style="float:right" onclick="resetUser('\${v.username}')">Reset</button></div>\`).join('');
+  } catch(e){}
+}
+
+async function loadAdmins() {
+  try {
+    const r = await fetch(API+'/admins');
+    const d = await r.json();
+    document.getElementById('adminsList').innerHTML = (d.admins||[]).map(e =>
+      \`<div class="item">\${e}<button class="btn btn-sm btn-red" style="float:right" onclick="removeAdmin('\${e}')">Remove</button></div>\`
+    ).join('');
+  } catch(e){}
+}
+
+async function loadKeywordsForCategory() {
+  try {
+    const cat = document.getElementById('categorySelect').value;
+    const r = await fetch(API+'/keywords');
+    const d = await r.json();
+    document.getElementById('keywordsList').innerHTML = (d.keywords[cat]||[]).map(kw =>
+      \`<span class="tag">\${kw}<button onclick="removeKeyword('\${cat}','\${kw}')">×</button></span>\`
+    ).join('') || '<span style="color:#999;font-size:13px">No keywords yet</span>';
+  } catch(e){}
+}
+
+async function addKeyword() {
+  const cat = document.getElementById('categorySelect').value;
+  const kw = document.getElementById('newKeyword').value.trim();
+  if(!kw) return;
+  await fetch(API+'/keywords',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:cat,keyword:kw,action:'add'})});
+  document.getElementById('newKeyword').value='';
+  loadKeywordsForCategory();
+}
+
+async function removeKeyword(cat,kw) {
+  await fetch(API+'/keywords',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:cat,keyword:kw,action:'remove'})});
+  loadKeywordsForCategory();
+}
+
+async function addAdmin() {
+  const email = document.getElementById('newAdmin').value.trim();
+  if(!email) return;
+  await fetch(API+'/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,action:'add'})});
+  document.getElementById('newAdmin').value='';
+  loadAdmins();
+}
+
+async function removeAdmin(email) {
+  if(!confirm('Remove '+email+'?')) return;
+  await fetch(API+'/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,action:'remove'})});
+  loadAdmins();
+}
+
+async function resetUser(username) {
+  if(!confirm('Reset violations for @'+username+'?')) return;
+  await fetch(API+'/violations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,action:'reset'})});
+  loadViolations();
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch(API+'/settings');
+    const d = await r.json();
+    if(d.settings) {
+      const s = d.settings;
+      if(s.firstViolation) { document.getElementById('action1').value=s.firstViolation.action||'warn'; document.getElementById('msg1').value=s.firstViolation.message||''; }
+      if(s.secondViolation) { document.getElementById('action2').value=s.secondViolation.action||'warn'; document.getElementById('msg2').value=s.secondViolation.message||''; }
+      if(s.thirdViolation) { document.getElementById('action3').value=s.thirdViolation.action||'mute'; document.getElementById('mute3').value=s.thirdViolation.duration||60; document.getElementById('msg3').value=s.thirdViolation.message||''; }
+      if(s.fifthViolation) { document.getElementById('action5').value=s.fifthViolation.action||'kick'; document.getElementById('msg5').value=s.fifthViolation.message||''; }
+      if(s.tenthViolation) { document.getElementById('action10').value=s.tenthViolation.action||'ban'; document.getElementById('msg10').value=s.tenthViolation.message||''; }
+    }
+  } catch(e){}
+}
+
+async function saveSettings() {
+  const settings = {
+    firstViolation: { action: document.getElementById('action1').value, message: document.getElementById('msg1').value },
+    secondViolation: { action: document.getElementById('action2').value, message: document.getElementById('msg2').value },
+    thirdViolation: { action: document.getElementById('action3').value, duration: parseInt(document.getElementById('mute3').value)||60, message: document.getElementById('msg3').value },
+    fifthViolation: { action: document.getElementById('action5').value, message: document.getElementById('msg5').value },
+    tenthViolation: { action: document.getElementById('action10').value, message: document.getElementById('msg10').value }
+  };
+  await fetch(API+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(settings)});
+  document.getElementById('settings-msg').textContent = '✅ Settings saved!';
+  setTimeout(()=>document.getElementById('settings-msg').textContent='',3000);
+}
+
+async function loadLogs() {
+  try {
+    const r = await fetch(API+'/logs');
+    const d = await r.json();
+    document.getElementById('logsList').innerHTML = !d.logs.length ? '<p style="color:#999">No logs yet.</p>' :
+      d.logs.slice(0,50).map(l => \`<div class="item"><strong>@\${l.username}</strong> — \${l.violationType}<br>
+      <small>"\${(l.messageText||'').substring(0,70)}..."</small><br>
+      <small style="color:#aaa">\${new Date(l.timestamp).toLocaleString()}</small></div>\`).join('');
+  } catch(e){}
+}
+
+loadStatus();
+</script>
+</body>
+</html>`;
 
 // USER PANEL HTML
 const USER_PANEL = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>My Violations - PSOTS</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;border-radius:10px;margin-bottom:20px;text-align:center}.header h1{font-size:24px;margin-bottom:10px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}.stat-card{background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.1)}.stat-card h3{color:#667eea;margin-bottom:10px}.stat-card .number{font-size:32px;font-weight:bold}.violation-item{background:white;padding:20px;border-radius:8px;margin-bottom:15px;border-left:4px solid #e74c3c;box-shadow:0 2px 5px rgba(0,0,0,0.1)}.violation-item h3{color:#e74c3c;margin-bottom:10px}.violation-item p{font-size:14px;color:#666;margin-bottom:10px}.btn{padding:12px 24px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;width:100%;margin-top:10px}.btn:hover{background:#764ba2}.no-violations{background:white;padding:40px;border-radius:8px;text-align:center}.no-violations h2{color:#27ae60;margin-bottom:10px}@media(max-width:600px){.container{padding:10px}.header h1{font-size:20px}}</style></head><body><div class="container"><div class="header"><h1>📊 Your Violations</h1><p>PSOTS Group - Last 30 Days</p></div><div id="content">Loading...</div></div><script>async function loadUserViolations(){const e=new URLSearchParams(window.location.search).get("id");if(!e)return void(document.getElementById("content").innerHTML="<p>Invalid user ID</p>");try{const t=await fetch("/api/user-violations?id="+e),i=await t.json();if(!i.violations)return void(document.getElementById("content").innerHTML='<div class="no-violations"><h2>✅ No Violations</h2><p>You\'re in good standing!</p></div>');let o=\`<div class="stats"><div class="stat-card"><h3>Total Violations</h3><div class="number">\${i.violations.count}</div></div><div class="stat-card"><h3>Days Since First Violation</h3><div class="number">\${Math.floor((Date.now()-i.violations.lastViolationTime)/86400000)}</div></div></div>\`;i.violations.history.forEach(e=>{o+=\`<div class="violation-item"><h3>\${e.type}</h3><p>\${new Date(e.timestamp).toLocaleDateString()}</p></div>\`}),o+=\`<button class="btn" onclick="appeal()">Appeal Violation</button>\`,document.getElementById("content").innerHTML=o}catch(e){document.getElementById("content").innerHTML="<p>Error loading data</p>"}}function appeal(){const e=prompt("Why should this violation be appealed? (Be specific)");e&&(alert("Appeal submitted. Admin will review within 24 hours."),localStorage.setItem("appeal_"+new URLSearchParams(window.location.search).get("id"),e))}loadUserViolations()</script></body></html>`;
@@ -182,19 +558,8 @@ export default {
       const url = new URL(request.url);
       const pathname = url.pathname;
 
-      // ADMIN DASHBOARD
+      // ADMIN DASHBOARD - always serve the HTML (auth handled client-side via Google Identity Services)
       if (pathname === '/admin' || pathname === '/admin/') {
-        const code = url.searchParams.get('code');
-        const clientId = env.GOOGLE_CLIENT_ID;
-        const redirectUri = `${url.origin}/admin`;
-
-        // If no OAuth code, show Google login
-        if (!code) {
-          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email&access_type=offline&prompt=select_account`;
-          return new Response(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}.login{background:white;padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;width:90%;max-width:360px}.logo{font-size:48px;margin-bottom:16px}h1{color:#333;font-size:24px;margin-bottom:8px}p{color:#666;margin-bottom:30px;font-size:14px}.btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px;background:white;color:#333;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px;text-decoration:none;transition:all 0.3s}.btn:hover{border-color:#667eea;background:#f8f0ff}.btn img{width:20px;height:20px}</style></head><body><div class="login"><div class="logo">🤖</div><h1>PSOTS Admin</h1><p>Sign in to access the moderation dashboard</p><a href="${authUrl}" class="btn"><img src="https://www.google.com/favicon.ico">Sign in with Google</a></div></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-        }
-
-        // OAuth code received - verify and show dashboard
         return new Response(ADMIN_DASHBOARD, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
 
@@ -287,6 +652,18 @@ export default {
             admins.splice(admins.indexOf(body.email), 1);
           }
           await saveAdmins(admins, env.VIOLATIONS);
+          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Settings
+        if (endpoint === 'settings' && request.method === 'GET') {
+          const settings = await getActionSettings(env.VIOLATIONS);
+          return new Response(JSON.stringify({ settings }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
+        if (endpoint === 'settings' && request.method === 'POST') {
+          const settings = await request.json();
+          await saveActionSettings(settings, env.VIOLATIONS);
           return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
         }
 
