@@ -383,10 +383,10 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const pathname = url.pathname.toLowerCase();
+    const pathname = url.pathname;
 
     // Admin Dashboard - Handle /admin requests
-    if (pathname.includes('admin')) {
+    if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin?')) {
       const pin = url.searchParams.get('pin') || '';
       if (!pin || pin !== ADMIN_PIN) {
         return new Response(`
