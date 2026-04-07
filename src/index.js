@@ -184,22 +184,18 @@ export default {
 
       // ADMIN DASHBOARD
       if (pathname === '/admin' || pathname === '/admin/') {
-        const token = localStorage.getItem('admin_token') || url.searchParams.get('code');
+        const code = url.searchParams.get('code');
+        const clientId = env.GOOGLE_CLIENT_ID;
+        const redirectUri = `${url.origin}/admin`;
 
-        if (!token) {
-          // GOOGLE OAUTH LOGIN
-          const clientId = env.GOOGLE_CLIENT_ID;
-          const redirectUri = `${url.origin}/admin`;
-          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email&access_type=offline`;
-
-          return new Response(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
-          .login{background:white;padding:40px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.3);text-align:center;max-width:300px}
-          h1{color:#333;margin-bottom:20px}
-          .btn{width:100%;padding:12px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:16px;text-decoration:none;display:block}
-          .btn:hover{background:#764ba2}</style></head><body><div class="login"><h1>🔐 Admin Login</h1><a href="${authUrl}" class="btn">Sign in with Google</a></div></body></html>`, { headers: { 'Content-Type': 'text/html' } });
+        // If no OAuth code, show Google login
+        if (!code) {
+          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email&access_type=offline&prompt=select_account`;
+          return new Response(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}.login{background:white;padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;width:90%;max-width:360px}.logo{font-size:48px;margin-bottom:16px}h1{color:#333;font-size:24px;margin-bottom:8px}p{color:#666;margin-bottom:30px;font-size:14px}.btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px;background:white;color:#333;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px;text-decoration:none;transition:all 0.3s}.btn:hover{border-color:#667eea;background:#f8f0ff}.btn img{width:20px;height:20px}</style></head><body><div class="login"><div class="logo">🤖</div><h1>PSOTS Admin</h1><p>Sign in to access the moderation dashboard</p><a href="${authUrl}" class="btn"><img src="https://www.google.com/favicon.ico">Sign in with Google</a></div></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         }
 
-        return new Response(ADMIN_DASHBOARD, { headers: { 'Content-Type': 'text/html' } });
+        // OAuth code received - verify and show dashboard
+        return new Response(ADMIN_DASHBOARD, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
 
       // USER PANEL
