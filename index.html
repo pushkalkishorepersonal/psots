@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PSOTS — Prestige Song of the South · Bangalore</title>
+  <meta name="description" content="Community portal for residents of Prestige Song of the South, Bangalore. 2,100+ flats, 14 towers, 33 acres."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0e1a20;
+      --ink-soft: #1e2e38;
+      --gold: #c49a3c;
+      --gold-light: #e8c76a;
+      --cream: #f7f3ee;
+      --cream-dark: #ede8e1;
+      --white: #ffffff;
+      --muted: #7a8a94;
+      --border: rgba(180,165,140,0.3);
+      --blue: #1d6fa4;
+      --green: #16a34a;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+    /* DISCLAIMER */
+    .disclaimer-bar {
+      background: var(--ink); color: rgba(255,255,255,0.62);
+      padding: 8px 2rem; font-size: 11.5px; text-align: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    }
+    .disclaimer-bar strong { color: var(--gold); }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 34px; left: 0; right: 0; z-index: 200;
+      background: rgba(247,243,238,0.97); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 66px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 4rem;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+    .nav-monogram {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--ink); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;
+    }
+    .nav-brand-text .name { font-size: 15px; font-weight: 600; color: var(--ink); display: block; }
+    .nav-brand-text .sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 2px; }
+    .nav-link {
+      padding: 7px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 500;
+      color: var(--muted); cursor: pointer; border: none; background: none;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--ink); background: var(--cream-dark); font-weight: 600; }
+
+    /* PAGES */
+    .page { display: none; padding-top: 100px; }
+    .page.active { display: block; }
+
+    /* ══ HERO ══ */
+    .hero { position: relative; height: calc(100vh - 100px); min-height: 600px; overflow: hidden; }
+    .hero-img {
+      position: absolute; inset: 0;
+      background-image: url('https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050757_190.jpg');
+      background-size: cover; background-position: center 35%;
+      transform: scale(1.05); animation: heroZoom 12s ease-out forwards;
+    }
+    @keyframes heroZoom { to { transform: scale(1); } }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, rgba(14,26,32,0.92) 0%, rgba(14,26,32,0.6) 50%, rgba(14,26,32,0.15) 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 2; height: 100%;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 6rem; max-width: 780px;
+    }
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 1.8rem;
+      opacity: 0; animation: fadeUp 0.8s 0.3s forwards;
+    }
+    .hero-eyebrow-line { width: 36px; height: 1px; background: var(--gold); }
+    .hero-eyebrow span { font-size: 11px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; font-weight: 600; }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.2rem, 6vw, 5.5rem); font-weight: 300;
+      color: white; line-height: 1.05;
+      opacity: 0; animation: fadeUp 0.8s 0.5s forwards;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold-light); }
+    .hero-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-weight: 300;
+      color: rgba(255,255,255,0.7); margin: 0.5rem 0 1.8rem;
+      opacity: 0; animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-desc {
+      font-size: 15px; color: rgba(255,255,255,0.58); line-height: 1.8;
+      max-width: 460px; margin-bottom: 2.8rem;
+      opacity: 0; animation: fadeUp 0.8s 0.7s forwards;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.8s 0.9s forwards; }
+    .btn-gold {
+      background: var(--gold); color: var(--ink);
+      padding: 13px 28px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover { background: var(--gold-light); transform: translateY(-2px); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.1); color: white;
+      padding: 13px 28px; border-radius: 12px; font-size: 14px; font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.25); cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.18); }
+    .hero-scroll {
+      position: absolute; bottom: 2.5rem; left: 6rem;
+      display: flex; align-items: center; gap: 10px;
+      color: rgba(255,255,255,0.35); font-size: 10px; letter-spacing: 2.5px;
+      text-transform: uppercase; opacity: 0; animation: fadeUp 1s 1.2s forwards;
+    }
+    .scroll-line { width: 40px; height: 1px; background: rgba(255,255,255,0.25); animation: pulse 2.5s 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.25} 50%{opacity:0.8} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    /* STATS */
+    .stats-strip { position: relative; overflow: hidden; background: var(--ink); padding: 0 4rem; display: flex; }
+    .stats-strip-bg {
+      position: absolute; inset: 0;
+      background-image: url('https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_045911_860.jpg');
+      background-size: cover; background-position: center; opacity: 0.1;
+    }
+    .stat-item { position: relative; z-index: 1; flex: 1; padding: 2rem 1.5rem; border-right: 1px solid rgba(255,255,255,0.07); }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 500; color: var(--gold); line-height: 1; }
+    .stat-label { font-size: 11.5px; color: rgba(255,255,255,0.45); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
+
+    /* ABOUT */
+    .about-section { display: grid; grid-template-columns: 1fr 1fr; }
+    .about-image { position: relative; overflow: hidden; min-height: 520px; }
+    .about-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; }
+    .about-image:hover img { transform: scale(1.04); }
+    .about-content { background: var(--white); padding: 5rem; display: flex; flex-direction: column; justify-content: center; }
+    .eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 1.2rem; }
+    .eyebrow-line { width: 28px; height: 1px; background: var(--gold); }
+    .eyebrow span { font-size: 11px; letter-spacing: 2.5px; color: var(--gold); text-transform: uppercase; font-weight: 600; }
+    .about-content h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.8rem, 2.8vw, 2.8rem); font-weight: 400;
+      color: var(--ink); line-height: 1.15; margin-bottom: 1.5rem;
+    }
+    .about-content h2 em { font-style: italic; }
+    .about-content p { font-size: 14.5px; color: var(--muted); line-height: 1.85; margin-bottom: 1rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.5rem; }
+    .badge {
+      padding: 6px 14px; border-radius: 20px;
+      background: var(--cream); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; color: var(--ink-soft);
+    }
+
+    /* GALLERY */
+    .gallery-section { padding: 6rem 4rem; background: var(--cream); }
+    .gallery-header { margin-bottom: 3rem; }
+    .gallery-header h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 400; color: var(--ink); }
+    .gallery-header p { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+    .gallery-masonry {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(3, 230px);
+      gap: 10px;
+    }
+    .g { border-radius: 14px; overflow: hidden; position: relative; }
+    .g img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; display: block; }
+    .g:hover img { transform: scale(1.06); }
+    .g .gl { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(14,26,32,0.65)); padding: 1.5rem 1rem 0.7rem; color: rgba(255,255,255,0.85); font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; opacity: 0; transition: opacity 0.3s; }
+    .g:hover .gl { opacity: 1; }
+    .g1 { grid-column: 1/6; grid-row: 1/3; }
+    .g2 { grid-column: 6/9; grid-row: 1/2; }
+    .g3 { grid-column: 9/13; grid-row: 1/2; }
+    .g4 { grid-column: 6/10; grid-row: 2/3; }
+    .g5 { grid-column: 10/13; grid-row: 2/3; }
+    .g6 { grid-column: 1/5; grid-row: 3/4; }
+    .g7 { grid-column: 5/9; grid-row: 3/4; }
+    .g8 { grid-column: 9/13; grid-row: 3/4; }
+
+    /* CHHATH */
+    .chhath-section { display: grid; grid-template-columns: 1fr 1fr; background: var(--cream-dark); }
+    .chhath-img { position: relative; min-height: 520px; overflow: hidden; }
+    .chhath-img img { width: 100%; height: 100%; object-fit: cover; }
+    .chhath-content { padding: 5rem; display: flex; flex-direction: column; justify-content: center; }
+    .chhath-roman { font-family: 'Cormorant Garamond', serif; font-size: 5rem; font-weight: 300; color: var(--gold); opacity: 0.25; line-height: 1; margin-bottom: -1.2rem; }
+    .chhath-content h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 2.5vw, 2.5rem); font-weight: 400; color: var(--ink); line-height: 1.2; margin-bottom: 1.2rem; }
+    .chhath-content h2 em { font-style: italic; }
+    .chhath-content p { font-size: 14.5px; color: var(--muted); line-height: 1.8; margin-bottom: 0.8rem; }
+    .chhath-stats { display: flex; gap: 2.5rem; margin: 1.5rem 0 2rem; }
+    .cstat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 400; color: var(--ink); line-height: 1; }
+    .cstat-lbl { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+    .btn-dark { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--gold); padding: 13px 26px; border-radius: 12px; font-size: 14px; font-weight: 600; text-decoration: none; align-self: flex-start; transition: opacity 0.15s; }
+    .btn-dark:hover { opacity: 0.88; }
+
+    /* ══ INNER PAGES ══ */
+    .inner-hero { position: relative; height: 320px; overflow: hidden; display: flex; align-items: flex-end; }
+    .inner-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+    .inner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,26,32,0.95) 0%, rgba(14,26,32,0.25) 100%); }
+    .inner-title { position: relative; z-index: 2; padding: 3rem 4rem; }
+    .inner-label { font-size: 11px; letter-spacing: 2.5px; color: var(--gold); text-transform: uppercase; font-weight: 600; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px; }
+    .inner-label::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+    .inner-title h1 { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: white; }
+    .inner-body { padding: 4rem; }
+
+    /* CONTACTS */
+    .info-note { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 16px 20px; margin-bottom: 2.5rem; font-size: 13.5px; color: #78350f; line-height: 1.65; display: flex; gap: 12px; }
+    .off-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 3rem; }
+    .off-card { padding: 1.75rem; border-radius: 16px; border: 1px solid var(--border); }
+    .off-card.g { background: #f0fdf4; border-color: #bbf7d0; }
+    .off-card.b { background: #eff6ff; border-color: #bfdbfe; }
+    .off-card.a { background: #fffbeb; border-color: #fde68a; }
+    .off-dept { font-size: 10.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .off-contact { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .off-contact.cg { color: var(--green); }
+    .off-contact.cb { color: var(--blue); }
+    .off-contact.ca { color: #92400e; }
+    .off-card p { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+    .emerg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 3rem; }
+    .emerg-card { background: var(--white); border-radius: 14px; padding: 1.5rem; border: 1px solid var(--border); text-align: center; }
+    .emerg-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .emerg-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .emerg-num { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 500; color: var(--ink); }
+    .badge-247 { font-size: 10px; font-weight: 700; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+    .dir-note { background: var(--cream-dark); border-radius: 14px; padding: 2rem; text-align: center; border: 1px dashed rgba(180,165,140,0.5); }
+    .dir-note p { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+    /* GUIDE */
+    .guide-intro { background: var(--white); border-radius: 16px; padding: 2rem 2.5rem; border: 1px solid var(--border); margin-bottom: 2rem; }
+    .guide-intro p { font-size: 14px; color: var(--muted); line-height: 1.75; }
+    .acc-item { background: var(--white); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+    .acc-head { padding: 1.35rem 1.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--ink); }
+    .acc-head:hover { background: var(--cream); }
+    .acc-chevron { color: var(--muted); font-size: 1rem; transition: transform 0.2s; display: inline-block; }
+    .acc-head.open .acc-chevron { transform: rotate(180deg); }
+    .acc-body { display: none; padding: 0 1.75rem 1.75rem; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); line-height: 1.75; }
+    .acc-body.open { display: block; }
+    .rules-list { list-style: none; margin-top: 0.75rem; }
+    .rules-list li { padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 10px; align-items: flex-start; }
+    .rules-list li:last-child { border-bottom: none; }
+    .rules-list li::before { content: '—'; color: var(--gold); font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+    .penalty-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    .penalty-table th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--border); }
+    .penalty-table td { padding: 13px 14px; font-size: 13.5px; border-bottom: 1px solid var(--border); color: var(--ink-soft); }
+    .penalty-table tr:last-child td { border-bottom: none; }
+    .penalty-amt { font-weight: 600; text-align: right; color: var(--ink); }
+    .docs-card { background: var(--cream-dark); border-radius: 14px; padding: 1.75rem; display: flex; gap: 18px; margin-top: 2.5rem; border: 1px solid var(--border); }
+    .docs-icon { width: 46px; height: 46px; background: var(--white); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .docs-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+    .docs-info p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .docs-info a { color: var(--blue); font-weight: 500; }
+
+    /* FOOTER */
+    footer { background: var(--ink); color: white; padding: 5rem 4rem 3rem; }
+    .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 4rem; padding-bottom: 3rem; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 2rem; }
+    .footer-mono { width: 44px; height: 44px; border-radius: 11px; background: rgba(255,255,255,0.06); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; margin-bottom: 1.2rem; }
+    .footer-brand h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: white; margin-bottom: 0.3rem; }
+    .footer-brand .tagline { font-size: 10.5px; color: rgba(255,255,255,0.3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem; }
+    .footer-brand p { font-size: 13px; color: rgba(255,255,255,0.38); line-height: 1.75; max-width: 280px; }
+    .footer-col h4 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.28); font-weight: 600; margin-bottom: 1.2rem; }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 10px; }
+    .footer-col a { font-size: 13.5px; color: rgba(255,255,255,0.48); text-decoration: none; cursor: pointer; transition: color 0.15s; }
+    .footer-col a:hover { color: white; }
+    .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 1.2rem; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.22); }
+    .footer-tags { display: flex; gap: 16px; }
+    .footer-tag { font-size: 12px; color: rgba(255,255,255,0.2); }
+    .footer-disclaimer { font-size: 11px; color: rgba(255,255,255,0.16); line-height: 1.65; padding-top: 1.2rem; border-top: 1px solid rgba(255,255,255,0.06); }
+
+    /* SECTION DIVIDER */
+    .section-divider { height: 1px; background: linear-gradient(to right, transparent, var(--border), transparent); margin: 0 4rem; }
+
+    @media (max-width: 1100px) {
+      .about-section, .chhath-section { grid-template-columns: 1fr; }
+      .about-image, .chhath-img { min-height: 350px; }
+      .off-grid { grid-template-columns: 1fr; }
+      .emerg-grid { grid-template-columns: 1fr 1fr; }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links .nav-link:not(.active) { display: none; }
+      .hero-content, .hero-scroll { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .stats-strip { padding: 0 1.5rem; flex-wrap: wrap; }
+      .stat-item { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+      .gallery-section, .inner-body { padding: 3rem 1.5rem; }
+      .about-content, .chhath-content { padding: 3rem 1.5rem; }
+      .inner-title { padding: 2rem 1.5rem; }
+      .gallery-masonry { display: flex; flex-direction: column; }
+      .g { height: 220px; }
+      .footer-top { grid-template-columns: 1fr; gap: 2rem; }
+      footer { padding: 3rem 1.5rem 2rem; }
+      .emerg-grid { grid-template-columns: 1fr 1fr; }
+      .section-divider { margin: 0 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer-bar">
+  🏘️ <strong>Resident Initiative</strong> — Independently built by PSOTS residents for community convenience. Not affiliated with or endorsed by the RWA. For official matters, use MyGate or contact the management office.
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand" onclick="showPage('home')">
+    <div class="nav-monogram">PS</div>
+    <div class="nav-brand-text">
+      <span class="name">PSOTS</span>
+      <span class="sub">Prestige Song of the South</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" id="nav-home" onclick="showPage('home')">Home</button>
+    <button class="nav-link" id="nav-events" onclick="showPage('events')">Events</button>
+    <button class="nav-link" id="nav-contacts" onclick="showPage('contacts')">Contacts</button>
+    <button class="nav-link" id="nav-guide" onclick="showPage('guide')">Guide</button>
+  </div>
+</nav>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="page-home" class="page active">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-img"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-line"></div>
+        <span>Bangalore · Ward 192 · 33 Acres</span>
+      </div>
+      <h1>Your home.<br><em>Our community.</em></h1>
+      <div class="hero-sub">Prestige Song of the South</div>
+      <p class="hero-desc">A resident-built portal bringing notices, events, contacts, and community guidelines together — in one place, for our 2,100+ families.</p>
+      <div class="hero-btns">
+        <button class="btn-gold" onclick="showPage('contacts')">Emergency Contacts</button>
+        <button class="btn-ghost" onclick="showPage('guide')">Community Guide</button>
+      </div>
+    </div>
+    <div class="hero-scroll"><div class="scroll-line"></div><span>Explore</span></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stats-strip-bg"></div>
+    <div class="stat-item"><div class="stat-num">2,100+</div><div class="stat-label">Flats</div></div>
+    <div class="stat-item"><div class="stat-num">14</div><div class="stat-label">Towers</div></div>
+    <div class="stat-item"><div class="stat-num">33</div><div class="stat-label">Acres</div></div>
+    <div class="stat-item"><div class="stat-num">25+</div><div class="stat-label">Amenities</div></div>
+    <div class="stat-item"><div class="stat-num">24/7</div><div class="stat-label">Security</div></div>
+    <div class="stat-item"><div class="stat-num">BBMP</div><div class="stat-label">OC Certified</div></div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="about-section">
+    <div class="about-image">
+      <img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_045943_963.jpg" alt="Aerial view of PSOTS" loading="lazy"/>
+    </div>
+    <div class="about-content">
+      <div class="eyebrow"><div class="eyebrow-line"></div><span>About Our Society</span></div>
+      <h2>A landmark community in the <em>heart of South Bangalore</em></h2>
+      <p>Prestige Song of the South is one of Bangalore's most celebrated residential townships — spread across 33 acres in Yelenahalli, Begur Sub-division, with 2,100+ homes across 14 towers.</p>
+      <p>Developed by Urbanize Developers (India) Pvt. Ltd. under the Prestige Group brand, the society holds Final Occupancy Certificates from BBMP for both Phase 1 (2019) and Phase 2 (2022).</p>
+      <p>At the heart of the community is <strong>The Opera Club House</strong> — a world-class amenity block with swimming pools, spa, gym, home theatre, library, and banquet facilities.</p>
+      <div class="badges">
+        <span class="badge">🏛️ BBMP OC Certified</span>
+        <span class="badge">🎭 The Opera Club House</span>
+        <span class="badge">📍 Yelenahalli, Bangalore</span>
+        <span class="badge">🏗️ Prestige Group</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="gallery-section">
+    <div class="gallery-header">
+      <div class="eyebrow"><div class="eyebrow-line"></div><span>Life at PSOTS</span></div>
+      <h2>Moments captured by our residents</h2>
+      <p>Every photograph on this site was taken by a PSOTS resident — no stock photography.</p>
+    </div>
+    <div class="gallery-masonry">
+      <div class="g g1"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050111_024.jpg" alt="Sunset aerial" loading="lazy"/><div class="gl">Sunset from the towers</div></div>
+      <div class="g g2"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050118_616.jpg" alt="The Opera Club House" loading="lazy"/><div class="gl">The Opera Club House</div></div>
+      <div class="g g3"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050634_376.jpg" alt="Pool at dusk" loading="lazy"/><div class="gl">Swimming Pool</div></div>
+      <div class="g g4"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_045953_610.jpg" alt="Aerial pool night" loading="lazy"/><div class="gl">Diwali Night · Aerial</div></div>
+      <div class="g g5"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050741_123.jpg" alt="Gardens" loading="lazy"/><div class="gl">Landscaped Gardens</div></div>
+      <div class="g g6"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050712_507.jpg" alt="Moonlit towers" loading="lazy"/><div class="gl">Moonlit Towers</div></div>
+      <div class="g g7"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050124_112.jpg" alt="Evening walkway" loading="lazy"/><div class="gl">Evening Walkway</div></div>
+      <div class="g g8"><img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050222_915.jpg" alt="PSOTS towers" loading="lazy"/><div class="gl">14 Towers · 33 Acres</div></div>
+    </div>
+  </div>
+
+  <!-- CHHATH SPOTLIGHT -->
+  <div class="chhath-section">
+    <div class="chhath-img">
+      <img src="https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050657_348.jpg" alt="Chhath Puja at PSOTS" loading="lazy"/>
+    </div>
+    <div class="chhath-content">
+      <div class="chhath-roman">V</div>
+      <div class="eyebrow" style="margin-top:0.5rem;"><div class="eyebrow-line"></div><span>Chhath Puja 2026</span></div>
+      <h2>Panch Varsh Mahotsav —<br><em>Five years of faith</em></h2>
+      <p>What began with 58 families at a ghat has grown into PSOTS's grandest annual celebration. This year marks our 5th Chhath Puja — a milestone we're honouring with a larger ghat, prasad for all 2,100+ flats, and a community cultural programme.</p>
+      <div class="chhath-stats">
+        <div><div class="cstat-num">400+</div><div class="cstat-lbl">At Arghya</div></div>
+        <div><div class="cstat-num">15+</div><div class="cstat-lbl">Vrati Families</div></div>
+        <div><div class="cstat-num">5th</div><div class="cstat-lbl">Year · 2026</div></div>
+      </div>
+      <a href="https://chhath.psots.in" class="btn-dark" target="_blank">🌅 Visit chhath.psots.in</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-mono">PS</div>
+        <h3>Prestige Song of the South</h3>
+        <div class="tagline">Community Portal · psots.in</div>
+        <p>A resident-built portal for the 2,100+ families across 14 towers in Yelenahalli, Bangalore. Built by residents, for residents. No ads, no spam.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Portal</h4>
+        <ul>
+          <li><a onclick="showPage('home')">Home</a></li>
+          <li><a onclick="showPage('events')">Events</a></li>
+          <li><a onclick="showPage('contacts')">Contacts</a></li>
+          <li><a onclick="showPage('guide')">Community Guide</a></li>
+          <li><a href="https://chhath.psots.in" target="_blank">🌅 Chhath Puja 2026</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:ec@psots.in">ec@psots.in</a></li>
+          <li><a href="mailto:finance@psots.in">finance@psots.in</a></li>
+          <li><a href="tel:+916366561152">+91 63665 61152</a></li>
+          <li><a href="tel:+918041404804">+91 804140 4804</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 PSOTS Community Portal · psots.in</span>
+      <div class="footer-tags"><span class="footer-tag">Self-managed</span><span class="footer-tag">No ads</span><span class="footer-tag">No spam</span></div>
+    </div>
+    <p class="footer-disclaimer">⚠️ This portal is an independent resident initiative and is not affiliated with, endorsed by, or representative of the Prestige Song of the South Residents Welfare Association (RWA). For official society communications, use MyGate or contact the management office directly. The psots.in domain and @psots.in email addresses are managed by resident volunteers.</p>
+  </footer>
+</div>
+
+<!-- ══════════ EVENTS ══════════ -->
+<div id="page-events" class="page">
+  <div class="inner-hero">
+    <div class="inner-bg" style="background-image:url('https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050657_348.jpg')"></div>
+    <div class="inner-overlay"></div>
+    <div class="inner-title">
+      <div class="inner-label">Community</div>
+      <h1>Events</h1>
+    </div>
+  </div>
+  <div class="inner-body">
+    <div style="background:var(--white);border-radius:18px;border:1px solid var(--border);overflow:hidden;max-width:580px;margin-bottom:3rem;">
+      <div style="background:var(--cream-dark);padding:1.25rem 1.75rem;display:flex;align-items:center;gap:18px;">
+        <div style="text-align:center;min-width:56px;">
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;">NOV</div>
+          <div style="font-size:2.4rem;font-weight:400;color:var(--ink);font-family:'Cormorant Garamond',serif;line-height:1;">3</div>
+        </div>
+        <div><div style="font-size:13px;color:var(--muted);">Monday, 2026 · Sandhya Arghya 5:45 PM onwards</div></div>
+      </div>
+      <div style="padding:1.75rem;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;color:var(--ink);margin-bottom:10px;">Chhath Puja 2026 — Panch Varsh Mahotsav</h3>
+        <p style="font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:16px;">Our grandest Chhath Puja — the 5th anniversary. Sandhya Arghya Nov 3 at 5:45 PM, Usha Arghya Nov 4 at 6:15 AM at the Society Ghat. Prasad for all 2,100+ flats. Full details, contributions, and finance transparency at chhath.psots.in.</p>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">📍 Society Ghat — Amphitheatre &nbsp;·&nbsp; 🌅 400+ devotees expected</div>
+        <a href="https://chhath.psots.in" target="_blank" class="btn-dark">🌅 Visit chhath.psots.in</a>
+      </div>
+    </div>
+    <div style="background:var(--cream-dark);border-radius:16px;padding:2.5rem;border:1px dashed rgba(180,165,140,0.5);max-width:580px;">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;color:var(--ink);margin-bottom:8px;">More Events</h3>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.7;">Community gatherings, AGMs, cultural celebrations, and festivals will be listed here as they are scheduled. Check back closer to the event dates.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CONTACTS ══════════ -->
+<div id="page-contacts" class="page">
+  <div class="inner-hero">
+    <div class="inner-bg" style="background-image:url('https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050118_616.jpg')"></div>
+    <div class="inner-overlay"></div>
+    <div class="inner-title">
+      <div class="inner-label">Directory</div>
+      <h1>Emergency Contacts</h1>
+    </div>
+  </div>
+  <div class="inner-body">
+    <div class="info-note">
+      ℹ️ <div><strong>Note on @psots.in emails:</strong> Emails sent to ec@psots.in and finance@psots.in are received directly by the RWA Executive Committee and Finance Committee members respectively — official channels managed by elected society representatives.</div>
+    </div>
+    <div style="margin-bottom:1.2rem;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">── Official Channels</div>
+    <div class="off-grid">
+      <div class="off-card g">
+        <div class="off-dept">Property Management Helpdesk</div>
+        <div class="off-contact cg">📞 +91 63665 61152</div>
+        <p>+91 804140 4804<br>sots.helpdesk@prestigeconstructions.co.in<br><br>⚠️ Raise tickets first via MyGate app</p>
+      </div>
+      <div class="off-card b">
+        <div class="off-dept">Executive Committee</div>
+        <div class="off-contact cb">✉️ ec@psots.in</div>
+        <p>Governance, escalations, event approvals. Emails received by EC members directly.</p>
+      </div>
+      <div class="off-card a">
+        <div class="off-dept">Finance / Accounting</div>
+        <div class="off-contact ca">✉️ finance@psots.in</div>
+        <p>CAM dues, maintenance charges, payment queries. Emails received by Finance Committee members.</p>
+      </div>
+    </div>
+    <div style="margin-bottom:1.2rem;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">── National Emergency Numbers</div>
+    <div class="emerg-grid">
+      <div class="emerg-card"><div class="emerg-icon">🚒</div><div class="emerg-name">Fire</div><div class="emerg-num">101 <span class="badge-247">24/7</span></div></div>
+      <div class="emerg-card"><div class="emerg-icon">🚑</div><div class="emerg-name">Ambulance</div><div class="emerg-num">108 <span class="badge-247">24/7</span></div></div>
+      <div class="emerg-card"><div class="emerg-icon">👮</div><div class="emerg-name">Police</div><div class="emerg-num">100 <span class="badge-247">24/7</span></div></div>
+      <div class="emerg-card"><div class="emerg-icon">🆘</div><div class="emerg-name">National Emergency</div><div class="emerg-num">112 <span class="badge-247">24/7</span></div></div>
+    </div>
+    <div class="dir-note">
+      <div style="font-size:1.8rem;margin-bottom:0.6rem;opacity:0.35;">📞</div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;color:var(--ink);">Society Directory</h3>
+      <p>Security desk, maintenance, and amenities contacts will be listed here once all numbers are verified. Only confirmed contacts will be published.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ GUIDE ══════════ -->
+<div id="page-guide" class="page">
+  <div class="inner-hero">
+    <div class="inner-bg" style="background-image:url('https://raw.githubusercontent.com/pushkalkishorepersonal/psots/main/IMG_20260322_050741_123.jpg')"></div>
+    <div class="inner-overlay"></div>
+    <div class="inner-title">
+      <div class="inner-label">Reference</div>
+      <h1>Rules & Amenities</h1>
+    </div>
+  </div>
+  <div class="inner-body">
+    <div class="guide-intro">
+      <p>This guide summarises key points from the PSOTS Rules of Residency (v2.0, October 2025) and amenity guidelines. For the complete legal text, contact <a href="mailto:ec@psots.in" style="color:var(--blue);font-weight:500;">ec@psots.in</a> or request a soft copy via the Property Management Helpdesk on MyGate.</p>
+    </div>
+
+    <!-- AMENITIES -->
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🏊 &nbsp;Swimming Pool</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">Hours: 6:00 AM – 9:00 PM daily. Children below 12 must be accompanied by an adult. No diving. Swimwear mandatory. Shower before entering. No food or drinks inside pool area.</div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🏋️ &nbsp;Fitness & Indoor Sports</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">Hours: 5:00 AM – 11:00 PM daily. Proper attire and shoes mandatory. Wipe equipment after use. No loud music without headphones. Badminton / TT: Booking via MyGate app, max 1 hour per session if others are waiting.</div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🏆 &nbsp;Outdoor Sports</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">Cricket ground, football area, and children's play area: 6:00 AM – 9:00 PM. No cricket with hard balls in common areas. No cycling or skating near pool or inside the clubhouse. Ground bookings via MyGate app.</div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🎭 &nbsp;Amphitheatre & Events</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">Bookings must be approved by EC minimum 7 days in advance. Events must end by 10:30 PM. Cleanup is organiser's responsibility — penalty ₹5,000 if not cleaned. No political events inside PSOTS. Contact ec@psots.in to book.</div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🌳 &nbsp;Other Amenities</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">Jogging track: 5:00 AM – 10:00 PM. The Opera Club House: 6:00 AM – 11:00 PM. Library: 9:00 AM – 8:00 PM. Party hall: Booking via MyGate, EC approval required. Walking on lawns is strictly prohibited.</div>
+    </div>
+
+    <!-- KEY RULES -->
+    <div style="margin:2.5rem 0 1.2rem;">
+      <div class="eyebrow"><div class="eyebrow-line"></div><span>Key Rules at a Glance</span></div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--ink);">Rules of Residency</h2>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🚗 &nbsp;Vehicles & Parking</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">
+        <ul class="rules-list">
+          <li>Speed limit: 15 km/h on podium and in basements</li>
+          <li>Drive clockwise only on podium roads</li>
+          <li>PSOTS is a honk-free community</li>
+          <li>Park only in your allocated basement slot</li>
+          <li>Guest parking free for up to 2 days; ₹250/day (4W) or ₹100/day (2W) thereafter</li>
+          <li>Visitor rental parking: ₹1,500/month (individual) or ₹2,500/month (linked) — email helpdesk to apply</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🗑️ &nbsp;Waste & Garbage</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">
+        <ul class="rules-list">
+          <li>Segregate waste: Wet (green bin), Dry (blue bin), Sanitary/Reject (red bin)</li>
+          <li>Keep bins outside your flat between 9:00 AM – 12:00 PM only</li>
+          <li>If leaving early: bags allowed from 6:00 AM in CPCB-certified compostable bags only</li>
+          <li>Take back empty bins by 12:30 PM</li>
+          <li>Keeping garbage outside beyond allowed timings: ₹500 fine</li>
+          <li>Interior work debris: contact helpdesk separately — do not leave in basements</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="acc-item">
+      <div class="acc-head" onclick="toggleAcc(this)"><span>🏘️ &nbsp;Common Areas & Conduct</span><span class="acc-chevron">▾</span></div>
+      <div class="acc-body">
+        <ul class="rules-list">
+          <li>No garments, rugs, or antennae on balcony grills or building facades</li>
+          <li>No encroachment of corridors — no shoe racks, plants, bicycles, or cartons outside flats</li>
+          <li>Children's play areas: for children under 12 only</li>
+          <li>Walking on lawns strictly prohibited (except unavoidable circumstances)</li>
+          <li>Political events are prohibited inside PSOTS</li>
+          <li>No commercial activities from residential apartments without prior written permission from EC</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PENALTIES -->
+    <div style="margin:2.5rem 0 1.2rem;">
+      <div class="eyebrow"><div class="eyebrow-line"></div><span>Penalties & Charges</span></div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--ink);margin-bottom:4px;">Quick Reference</h2>
+      <p style="font-size:13.5px;color:var(--muted);">Fines levied per instance. Non-payment may result in suspension of facility access. Paid via MyGate — no cash accepted.</p>
+    </div>
+    <div style="background:var(--white);border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+      <table class="penalty-table">
+        <thead><tr><th>Violation</th><th class="penalty-amt">Fine / Charge</th></tr></thead>
+        <tbody>
+          <tr><td>Common area noise / littering / improper trash</td><td class="penalty-amt">₹1,000</td></tr>
+          <tr><td>Common area encroachment (not cleared)</td><td class="penalty-amt">₹5,000 + removal cost</td></tr>
+          <tr><td>Garbage kept outside flat beyond allowed timing</td><td class="penalty-amt">₹500</td></tr>
+          <tr><td>Littering in outdoor sports facilities</td><td class="penalty-amt">₹2,000 cleaning charge</td></tr>
+          <tr><td>Amphitheatre not cleaned after event</td><td class="penalty-amt">₹5,000 cleaning charge</td></tr>
+          <tr><td>Pet waste not cleaned in common areas</td><td class="penalty-amt">₹1,000</td></tr>
+          <tr><td>Interior work debris removal (mandatory)</td><td class="penalty-amt">₹3,000</td></tr>
+          <tr><td>Move-in / Move-out charge (tenant)</td><td class="penalty-amt">₹1,500 + GST each way</td></tr>
+          <tr><td>Loss of parking sticker / RFID</td><td class="penalty-amt">₹500 replacement</td></tr>
+          <tr><td>Driving lesson inside society</td><td class="penalty-amt">₹2,000 (1st); reported on repeat</td></tr>
+          <tr><td>Guest parking (4W) beyond 2 free days</td><td class="penalty-amt">₹250 / day</td></tr>
+          <tr><td>Guest parking (2W) beyond 2 free days</td><td class="penalty-amt">₹100 / day</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px;">Source: PSOTS Rules of Residency v2.0 & Penalties Schedule. The Association reserves the right to revise penalties at any time.</p>
+
+    <div class="docs-card">
+      <div class="docs-icon">📖</div>
+      <div class="docs-info">
+        <h4>Full Documents</h4>
+        <p>This guide summarises key points from the PSOTS Rules of Residency (v2.0, October 2025), Penalties Schedule, and Declaration of Duties (DOD). For complete legal text, contact <a href="mailto:ec@psots.in">ec@psots.in</a> or request a copy via the Property Management Helpdesk on MyGate.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    const btn = document.getElementById('nav-' + name);
+    if (btn) btn.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+  function toggleAcc(header) {
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.acc-chevron');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open');
+    header.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
