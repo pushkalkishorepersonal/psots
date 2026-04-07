@@ -1,8 +1,9 @@
 // PSOTS Telegram Moderation Bot - Cloudflare Workers
 // With Google OAuth, RBAC, User Panel, Appeals & Status Bar
 
-const GOOGLE_CLIENT_ID = "774636811164-c9n9n8a27c9d0fbhg7e6vie759gq1sun.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
+// Secrets loaded from Cloudflare environment
+// Use: wrangler secret put GOOGLE_CLIENT_ID
+//      wrangler secret put GOOGLE_CLIENT_SECRET
 const ADMIN_ID = 989358143;
 const INITIAL_ADMIN = "pushkalkishore@gmail.com";
 
@@ -187,7 +188,7 @@ export default {
 
         if (!token) {
           // GOOGLE OAUTH LOGIN
-          const clientId = GOOGLE_CLIENT_ID;
+          const clientId = env.GOOGLE_CLIENT_ID;
           const redirectUri = `${url.origin}/admin`;
           const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email&access_type=offline`;
 
