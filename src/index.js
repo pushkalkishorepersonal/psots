@@ -382,14 +382,18 @@ const DASHBOARD_HTML = `<!DOCTYPE html>
 // Main handler
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const pathname = url.pathname;
+    try {
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+      const searchParams = new URL(request.url).searchParams;
+      const pin = searchParams.get('pin') || '';
 
-    // Admin Dashboard - Handle /admin requests
-    if (pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin?')) {
-      const pin = url.searchParams.get('pin') || '';
-      if (!pin || pin !== ADMIN_PIN) {
-        return new Response(`
+      // ADMIN DASHBOARD - Priority 1
+      // Match /admin with or without trailing slash or query params
+      if (pathname === '/admin' || pathname === '/admin/') {
+        // PIN check
+        if (!pin || pin !== ADMIN_PIN) {
+          return new Response(`
           <!DOCTYPE html>
           <html>
           <head><meta name="viewport" content="width=device-width"><style>
@@ -410,12 +414,14 @@ export default {
             </div>
           </body>
           </html>
-        `, { headers: { 'Content-Type': 'text/html' } });
-      }
-      return new Response(DASHBOARD_HTML, { headers: { 'Content-Type': 'text/html' } });
+        `, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
-    // API Endpoints
+      // RETURN DASHBOARD if PIN correct
+      return new Response(DASHBOARD_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    // API ENDPOINTS - Priority 2
     if (pathname.startsWith('/api/')) {
       const endpoint = pathname.replace('/api/', '');
 
@@ -548,11 +554,16 @@ export default {
 
         return new Response('OK');
       } catch (error) {
-        console.error('Error:', error);
-        return new Response('Error', { status: 500 });
+        console.error('Telegram error:', error);
+        return new Response('Telegram Error', { status: 500 });
       }
     }
 
+    // FALLBACK - No route matched
     return new Response('OK');
+    } catch (error) {
+      console.error('Worker error:', error);
+      return new Response('Worker Error', { status: 500 });
+    }
   }
 };
