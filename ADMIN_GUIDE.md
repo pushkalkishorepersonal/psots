@@ -216,8 +216,14 @@ Get direct notifications when violations occur:
 
 **⛔ 10th Violation**
 - EXTREME ALERT to admin
-- Removal candidate
-- Immediate action recommended
+- Flagged as "Removal Candidate"
+- **Admin makes final decision on removal**
+
+**Important:** Bot only alerts. Admins decide if removal is warranted based on:
+- Overall behavior patterns
+- Whether user is improving
+- Severity of violations
+- Whether deserving of another chance
 
 ---
 

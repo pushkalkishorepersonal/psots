@@ -190,8 +190,11 @@ View your violations & appeal
 
 **At 10 violations:**
 - Extreme alert to admin
-- Risk of group removal
-- Direct admin contact likely
+- **Admin will decide if removal is appropriate**
+- Direct admin contact expected
+- **Removal is NOT automatic** - admin has final say
+
+**Important:** Even at 10 violations, you can appeal or show improvement. Admins consider context and give chances.
 
 ---
 
