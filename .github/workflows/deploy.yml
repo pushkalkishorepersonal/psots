@@ -20,41 +20,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Set Cloudflare Secrets via API
-        run: |
-          WORKER_NAME="psots-telegram-bot-v2"
-          API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-
-          # Set BOT_TOKEN
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "BOT_TOKEN",
-              "text": "${{ secrets.BOT_TOKEN }}"
-            }'
-
-          # Set GOOGLE_CLIENT_ID
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "GOOGLE_CLIENT_ID",
-              "text": "${{ secrets.GOOGLE_CLIENT_ID }}"
-            }'
-
-          # Set GOOGLE_CLIENT_SECRET
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "GOOGLE_CLIENT_SECRET",
-              "text": "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            }'
-
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
