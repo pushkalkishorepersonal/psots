@@ -1,21 +1,12 @@
-name = "psots-telegram-bot"
+name = "psots-telegram-bot-v2"
 main = "src/index.js"
-type = "service"
 compatibility_date = "2024-01-01"
 
 # KV namespace bindings
 [[kv_namespaces]]
 binding = "VIOLATIONS"
-id = "your_kv_namespace_id"  # Replace after creating namespace
+id = "3c89be83b87e4cf0b8f91b18bf2dc0e4"
 
 [[kv_namespaces]]
 binding = "AUDIT_LOG"
-id = "your_audit_kv_namespace_id"  # Replace after creating namespace
-
-# Environment variables
-[env.production]
-vars = { ADMIN_ID = "989358143" }
-
-# Trigger for webhook (optional, for scheduling cleanup)
-[[triggers.crons]]
-crons = ["0 0 * * *"]  # Daily at midnight UTC
+id = "6a727dbadb5c4bb3b1062c319758a0a1"
