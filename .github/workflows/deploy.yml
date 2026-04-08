@@ -20,29 +20,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate wrangler.toml with secrets
+      - name: Store BOT_TOKEN in Cloudflare KV
         run: |
-          cat > wrangler.toml << 'EOF'
-          name = "psots-telegram-bot-v2"
-          main = "src/index.js"
-          compatibility_date = "2024-01-01"
-
-          # Environment variables and secrets
-          [vars]
-          ADMIN_ID = "989358143"
-          BOT_TOKEN = "${{ secrets.BOT_TOKEN }}"
-          GOOGLE_CLIENT_ID = "${{ secrets.GOOGLE_CLIENT_ID }}"
-          GOOGLE_CLIENT_SECRET = "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-
-          # KV namespace bindings
-          [[kv_namespaces]]
-          binding = "VIOLATIONS"
-          id = "3c89be83b87e4cf0b8f91b18bf2dc0e4"
-
-          [[kv_namespaces]]
-          binding = "AUDIT_LOG"
-          id = "6a727dbadb5c4bb3b1062c319758a0a1"
-          EOF
+          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/3c89be83b87e4cf0b8f91b18bf2dc0e4/values/_bot_token" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "${{ secrets.BOT_TOKEN }}"
 
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy

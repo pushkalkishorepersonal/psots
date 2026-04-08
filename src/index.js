@@ -20,6 +20,10 @@ const DEFAULT_KEYWORDS = {
 };
 
 // UTILITIES
+async function getBotToken(kv) {
+  return await kv.get('_bot_token');
+}
+
 async function getAdmins(kv) {
   const admins = await kv.get('_admin_emails');
   return admins ? JSON.parse(admins) : [INITIAL_ADMIN];
@@ -671,14 +675,15 @@ export default {
 
         // Diagnostics
         if (endpoint === 'diagnostics') {
-          const hasToken = !!env.BOT_TOKEN;
-          const tokenPreview = env.BOT_TOKEN ? env.BOT_TOKEN.substring(0, 10) + '...' : 'NOT SET';
+          const botToken = await getBotToken(env.VIOLATIONS);
+          const hasToken = !!botToken;
+          const tokenPreview = botToken ? botToken.substring(0, 10) + '...' : 'NOT SET';
 
           // Test webhook by getting bot info
           let botInfo = null;
-          if (env.BOT_TOKEN) {
+          if (botToken) {
             try {
-              const res = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/getMe`);
+              const res = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
               const data = await res.json();
               botInfo = data.ok ? { id: data.result.id, username: data.result.username } : { error: data.description };
             } catch (err) {
@@ -837,6 +842,9 @@ export default {
         const update = await request.json();
         if (!update.message) return new Response('OK');
 
+        const botToken = await getBotToken(env.VIOLATIONS);
+        if (!botToken) return new Response('OK'); // Bot token not configured
+
         const message = update.message;
         const chatId = message.chat.id;
         const userId = message.from.id;
@@ -846,7 +854,7 @@ export default {
 
         if (!text || message.from.is_bot) return new Response('OK');
 
-        const member = await getChatMember(chatId, userId, env.BOT_TOKEN);
+        const member = await getChatMember(chatId, userId, botToken);
         if (member && (member.status === 'administrator' || member.status === 'creator')) return new Response('OK');
 
         const keywords = await getKeywords(env.VIOLATIONS);
@@ -854,7 +862,7 @@ export default {
 
         if (violation) {
           await updateStats(env.VIOLATIONS);
-          await deleteMessage(chatId, message.message_id, env.BOT_TOKEN);
+          await deleteMessage(chatId, message.message_id, botToken);
 
           let userViolations = await getUserViolations(userId, env.VIOLATIONS);
           if (!userViolations) {
@@ -878,10 +886,10 @@ export default {
             msg = `Hi ${firstName}, this is your 2nd warning for ${violation}. Please be careful. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations</a>`;
           } else if (count >= 3) {
             msg = `Hi ${firstName}, 3rd violation reached. Admin notified. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
-            await sendMessage(ADMIN_ID, `⚠️ ${firstName} (@${username}) - ${count} violations. Latest: ${violation}`, env.BOT_TOKEN);
+            await sendMessage(ADMIN_ID, `⚠️ ${firstName} (@${username}) - ${count} violations. Latest: ${violation}`, botToken);
           }
 
-          await sendMessage(userId, msg, env.BOT_TOKEN);
+          await sendMessage(userId, msg, botToken);
         }
 
         return new Response('OK');
