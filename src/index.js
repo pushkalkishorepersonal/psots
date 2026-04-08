@@ -673,6 +673,25 @@ export default {
       if (pathname.startsWith('/api/')) {
         const endpoint = pathname.replace('/api/', '');
 
+        // Check webhook status
+        if (endpoint === 'webhook-status') {
+          const botToken = await getBotToken(env.VIOLATIONS);
+          if (!botToken) {
+            return new Response(JSON.stringify({ error: 'BOT_TOKEN not set' }), { headers: { 'Content-Type': 'application/json' } });
+          }
+
+          try {
+            const res = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+            const data = await res.json();
+            return new Response(JSON.stringify({
+              webhookConfigured: data.ok,
+              webhookInfo: data.result
+            }), { headers: { 'Content-Type': 'application/json' } });
+          } catch (err) {
+            return new Response(JSON.stringify({ error: err.message }), { headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+
         // Debug logs
         if (endpoint === 'debug-logs') {
           const list = await env.VIOLATIONS.list({ prefix: '_log_' });
@@ -865,8 +884,16 @@ export default {
       }
 
       // TELEGRAM WEBHOOK
-      if (request.method === 'POST') {
+      if (request.method === 'POST' && !pathname.startsWith('/api/')) {
         const update = await request.json();
+
+        // Log all POST requests
+        await env.VIOLATIONS.put(`_log_post_${Date.now()}`, JSON.stringify({
+          hasMessage: !!update.message,
+          updateKeys: Object.keys(update),
+          timestamp: new Date().toISOString()
+        }), { expirationTtl: 86400 });
+
         if (!update.message) return new Response('OK');
 
         const botToken = await getBotToken(env.VIOLATIONS);
