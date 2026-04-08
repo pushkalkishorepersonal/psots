@@ -619,11 +619,31 @@ const USER_PANEL = `<!DOCTYPE html>
         let html = '<div class="stat-card"><h3>Total Violations</h3><div class="number">' + data.violations.count + '</div></div>';
 
         if (data.violations.history && data.violations.history.length > 0) {
-          html += '<h3 style="margin-top: 20px; margin-bottom: 10px;">Violation History</h3>';
+          html += '<h3 style="margin-top: 20px; margin-bottom: 10px;">📋 Violation History</h3>';
           data.violations.history.forEach(v => {
             const date = new Date(v.timestamp).toLocaleDateString();
-            html += '<div class="violation-item"><h3>' + v.type + '</h3><p>' + date + '</p></div>';
+            html += '<div class="violation-item"><h3>' + v.type + '</h3><p>' + date + '</p>';
+            if (v.message) {
+              html += '<p style="font-style: italic; color: #999; margin-top: 5px;">Message: "' + (v.message.substring(0, 100) + (v.message.length > 100 ? '...' : '')) + '"</p>';
+            }
+            html += '</div>';
           });
+        }
+
+        // Show admin contact list
+        if (data.admins && data.admins.length > 0) {
+          html += '<div style="margin-top: 30px; padding: 15px; background: #f0f0f0; border-radius: 8px;">';
+          html += '<h3 style="margin-bottom: 10px;">📞 Contact Group Admins</h3>';
+          html += '<p style="font-size: 13px; color: #666; margin-bottom: 10px;">If you believe this violation was unfair, reach out to a group admin:</p>';
+          data.admins.forEach(admin => {
+            html += '<div style="padding: 8px; background: white; margin-bottom: 8px; border-radius: 5px; font-size: 13px;">';
+            html += '📧 ' + admin.email;
+            if (admin.telegram_id) {
+              html += ' | 💬 @' + admin.telegram_id;
+            }
+            html += '</div>';
+          });
+          html += '</div>';
         }
 
         document.getElementById('content').innerHTML = html;
@@ -778,11 +798,16 @@ export default {
           return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
         }
 
-        // User Violations
+        // User Violations - Enhanced with message text and admin list
         if (endpoint.startsWith('user-violations')) {
           const userId = new URL(request.url).searchParams.get('id');
           const violations = await getUserViolations(userId, env.VIOLATIONS);
-          return new Response(JSON.stringify({ violations }), { headers: { 'Content-Type': 'application/json' } });
+          const admins = await getAdmins(env.VIOLATIONS);
+
+          return new Response(JSON.stringify({
+            violations,
+            admins: admins.map(a => ({ email: a, telegram_id: null }))
+          }), { headers: { 'Content-Type': 'application/json' } });
         }
 
         // Keywords
@@ -938,7 +963,11 @@ export default {
 
           userViolations.count++;
           userViolations.lastViolationTime = Date.now();
-          userViolations.history.push({ type: violation, timestamp: new Date().toISOString() });
+          userViolations.history.push({
+            type: violation,
+            timestamp: new Date().toISOString(),
+            message: text.substring(0, 200) // Store first 200 chars of message
+          });
           await saveUserViolations(userId, userViolations, env.VIOLATIONS);
 
           const auditLog = { userId, username, firstName, violationType: violation, messageText: text, timestamp: new Date().toISOString(), chatId };
@@ -947,16 +976,33 @@ export default {
           const count = userViolations.count;
           let msg = '';
 
+          // Build warning message based on violation count
           if (count === 1) {
             msg = `Hi ${firstName}, your message was removed for: ${violation}. Please follow group guidelines. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations</a>`;
           } else if (count === 2) {
             msg = `Hi ${firstName}, this is your 2nd warning for ${violation}. Please be careful. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations</a>`;
-          } else if (count >= 3) {
+          } else if (count === 3) {
             msg = `Hi ${firstName}, 3rd violation reached. Admin notified. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
-            await sendMessage(ADMIN_ID, `⚠️ ${firstName} (@${username}) - ${count} violations. Latest: ${violation}`, botToken);
+            await sendMessage(ADMIN_ID, `⚠️ ALERT: ${firstName} (@${username}) reached 3 violations. Latest: ${violation}`, botToken);
+          } else if (count === 5) {
+            msg = `Hi ${firstName}, you have reached 5 violations. This is a serious warning. Further violations may result in removal from the group. 🚫\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
+            await sendMessage(ADMIN_ID, `🚨 CRITICAL: ${firstName} (@${username}) reached 5 violations! Repeat offender. Consider action.`, botToken);
+          } else if (count >= 10) {
+            msg = `Hi ${firstName}, you have been removed from the group due to repeated violations. Please contact an admin to appeal. 🚫`;
+            await sendMessage(ADMIN_ID, `🔴 EXTREME: ${firstName} (@${username}) reached 10 violations. Auto-removal may be needed.`, botToken);
+          } else {
+            msg = `Hi ${firstName}, you have ${count} violations. Please review the guidelines. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
           }
 
+          // Send warning DM to user
           await sendMessage(userId, msg, botToken);
+
+          // Alert admins at key thresholds
+          if (count === 3 || count === 5 || count === 10) {
+            await env.VIOLATIONS.put(`_admin_alert_${Date.now()}`, JSON.stringify({
+              userId, username, firstName, count, violation, timestamp: new Date().toISOString()
+            }), { expirationTtl: 86400 });
+          }
         }
 
         return new Response('OK');
