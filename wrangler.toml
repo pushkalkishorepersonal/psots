@@ -3,12 +3,11 @@ main = "src/index.js"
 compatibility_date = "2024-01-01"
 
 # Environment variables and secrets
-vars = {
-  ADMIN_ID = "989358143",
-  BOT_TOKEN = "${BOT_TOKEN}",
-  GOOGLE_CLIENT_ID = "${GOOGLE_CLIENT_ID}",
-  GOOGLE_CLIENT_SECRET = "${GOOGLE_CLIENT_SECRET}"
-}
+[vars]
+ADMIN_ID = "989358143"
+BOT_TOKEN = "${BOT_TOKEN}"
+GOOGLE_CLIENT_ID = "${GOOGLE_CLIENT_ID}"
+GOOGLE_CLIENT_SECRET = "${GOOGLE_CLIENT_SECRET}"
 
 # KV namespace bindings
 [[kv_namespaces]]
