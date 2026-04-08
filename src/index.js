@@ -840,6 +840,12 @@ export default {
 
         if (!text || message.from.is_bot) return new Response('OK');
 
+        // Skip moderation for group admins (they send official messages/warnings)
+        const member = await getChatMember(chatId, userId, botToken);
+        if (member && (member.status === 'administrator' || member.status === 'creator')) {
+          return new Response('OK');
+        }
+
         const keywords = await getKeywords(env.VIOLATIONS);
         const violation = checkViolation(text, keywords);
 
