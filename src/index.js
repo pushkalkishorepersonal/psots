@@ -669,6 +669,31 @@ export default {
       if (pathname.startsWith('/api/')) {
         const endpoint = pathname.replace('/api/', '');
 
+        // Diagnostics
+        if (endpoint === 'diagnostics') {
+          const hasToken = !!env.BOT_TOKEN;
+          const tokenPreview = env.BOT_TOKEN ? env.BOT_TOKEN.substring(0, 10) + '...' : 'NOT SET';
+
+          // Test webhook by getting bot info
+          let botInfo = null;
+          if (env.BOT_TOKEN) {
+            try {
+              const res = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/getMe`);
+              const data = await res.json();
+              botInfo = data.ok ? { id: data.result.id, username: data.result.username } : { error: data.description };
+            } catch (err) {
+              botInfo = { error: err.message };
+            }
+          }
+
+          return new Response(JSON.stringify({
+            hasToken,
+            tokenPreview,
+            botInfo,
+            kvWorking: !!env.VIOLATIONS
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
         // Status
         if (endpoint === 'status') {
           const stats = await getStats(env.VIOLATIONS);
