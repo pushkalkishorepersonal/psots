@@ -2,6 +2,11 @@ name = "psots-telegram-bot-v2"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
+# Environment variables
+[env]
+[env.production]
+vars = { ADMIN_ID = "989358143" }
+
 # KV namespace bindings
 [[kv_namespaces]]
 binding = "VIOLATIONS"
