@@ -840,12 +840,6 @@ export default {
 
         if (!text || message.from.is_bot) return new Response('OK');
 
-        const member = await getChatMember(chatId, userId, botToken);
-        if (member && (member.status === 'administrator' || member.status === 'creator')) {
-          // Admin/creator, skip moderation
-          return new Response('OK');
-        }
-
         const keywords = await getKeywords(env.VIOLATIONS);
         const violation = checkViolation(text, keywords);
 
