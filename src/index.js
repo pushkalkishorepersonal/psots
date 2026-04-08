@@ -609,6 +609,16 @@ export default {
           }
         }
 
+        // Check keywords in KV
+        if (endpoint === 'check-keywords') {
+          const keywords = await getKeywords(env.VIOLATIONS);
+          return new Response(JSON.stringify({
+            keywordCategories: Object.keys(keywords),
+            buySell: keywords.buySell,
+            total: Object.values(keywords).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
         // Debug logs
         if (endpoint === 'debug-logs') {
           const list = await env.VIOLATIONS.list({ prefix: '_log_' });
@@ -839,9 +849,13 @@ export default {
         const keywords = await getKeywords(env.VIOLATIONS);
         const violation = checkViolation(text, keywords);
 
-        // Log violation check
+        // Log violation check with keyword details
         await env.VIOLATIONS.put(`_log_check_${Date.now()}`, JSON.stringify({
-          text, violation, keywords: Object.keys(keywords), timestamp: new Date().toISOString()
+          text,
+          violation,
+          keywordCategories: Object.keys(keywords),
+          buySellCount: keywords.buySell ? keywords.buySell.length : 0,
+          timestamp: new Date().toISOString()
         }), { expirationTtl: 86400 });
 
         if (violation) {
