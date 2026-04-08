@@ -673,6 +673,19 @@ export default {
       if (pathname.startsWith('/api/')) {
         const endpoint = pathname.replace('/api/', '');
 
+        // Debug logs
+        if (endpoint === 'debug-logs') {
+          const list = await env.VIOLATIONS.list({ prefix: '_log_' });
+          const logs = [];
+          for (const item of list.keys) {
+            const data = await env.VIOLATIONS.get(item.name);
+            logs.push({ key: item.name, value: JSON.parse(data) });
+          }
+          return new Response(JSON.stringify({
+            debugLogs: logs.sort((a, b) => b.key.localeCompare(a.key)).slice(0, 20)
+          }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
         // Diagnostics
         if (endpoint === 'diagnostics') {
           const botToken = await getBotToken(env.VIOLATIONS);
@@ -866,13 +879,26 @@ export default {
         const username = message.from.username || message.from.first_name || 'User';
         const firstName = message.from.first_name || 'User';
 
+        // Log webhook received
+        await env.VIOLATIONS.put(`_log_webhook_${Date.now()}`, JSON.stringify({
+          chatId, userId, text, timestamp: new Date().toISOString()
+        }), { expirationTtl: 86400 }); // 24 hour expiry
+
         if (!text || message.from.is_bot) return new Response('OK');
 
         const member = await getChatMember(chatId, userId, botToken);
-        if (member && (member.status === 'administrator' || member.status === 'creator')) return new Response('OK');
+        if (member && (member.status === 'administrator' || member.status === 'creator')) {
+          // Admin/creator, skip moderation
+          return new Response('OK');
+        }
 
         const keywords = await getKeywords(env.VIOLATIONS);
         const violation = checkViolation(text, keywords);
+
+        // Log violation check
+        await env.VIOLATIONS.put(`_log_check_${Date.now()}`, JSON.stringify({
+          text, violation, keywords: Object.keys(keywords), timestamp: new Date().toISOString()
+        }), { expirationTtl: 86400 });
 
         if (violation) {
           await updateStats(env.VIOLATIONS);
