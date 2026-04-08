@@ -257,19 +257,6 @@ header h1{font-size:20px}
       </div>
     </div>
 
-    <!-- Divider -->
-    <div style="display:flex;align-items:center;margin:20px 0;gap:10px">
-      <div style="flex:1;height:1px;background:#ddd"></div>
-      <span style="color:#999;font-size:12px">OR</span>
-      <div style="flex:1;height:1px;background:#ddd"></div>
-    </div>
-
-    <!-- PIN Login -->
-    <div style="margin-top:20px">
-      <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="6" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;text-align:center;letter-spacing:4px;margin-bottom:10px">
-      <button onclick="handlePINLogin()" style="width:100%;padding:10px;background:#667eea;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px">Login with PIN</button>
-    </div>
-
     <div id="auth-error" style="color:#e74c3c;font-size:13px;margin-top:12px;display:none">
       ❌ Not authorized. Contact admin.
     </div>
@@ -291,7 +278,6 @@ header h1{font-size:20px}
       <button class="tab-btn" onclick="switchTab('violations',this)">⚠️ Violations</button>
       <button class="tab-btn" onclick="switchTab('keywords',this)">🔑 Keywords</button>
       <button class="tab-btn" onclick="switchTab('admins',this)">👥 Admins</button>
-      <button class="tab-btn" onclick="switchTab('pins',this)">🔐 PIN Login</button>
       <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ Settings</button>
       <button class="tab-btn" onclick="switchTab('logs',this)">📝 Logs</button>
     </div>
@@ -338,16 +324,6 @@ header h1{font-size:20px}
       <div class="input-row">
         <input type="email" id="newAdmin" placeholder="Add admin email...">
         <button class="btn" onclick="addAdmin()">Add Admin</button>
-      </div>
-    </div>
-
-    <div id="pins" class="tab">
-      <h2 style="margin-bottom:16px">🔐 PIN Login Management</h2>
-      <p style="color:#666;font-size:13px;margin-bottom:16px">Manage PINs for alternative login method</p>
-      <div id="pinsList" style="margin-bottom:16px"></div>
-      <div class="input-row">
-        <input type="text" id="newPIN" placeholder="Enter new PIN (4-6 digits)" maxlength="6">
-        <button class="btn" onclick="addPIN()">Add PIN</button>
       </div>
     </div>
 
@@ -456,37 +432,6 @@ function logout() {
   document.getElementById('dashboard').style.display = 'none';
 }
 
-// PIN LOGIN HANDLER
-async function handlePINLogin() {
-  const pin = document.getElementById('pinInput').value.trim();
-  if (!pin) return;
-
-  try {
-    const res = await fetch(API + '/verify-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin })
-    });
-    const data = await res.json();
-
-    if (data.valid) {
-      currentUserEmail = 'PIN User';
-      document.getElementById('user-email').textContent = 'PIN Admin';
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('pinInput').value = '';
-      loadStatus();
-    } else {
-      document.getElementById('auth-error').style.display = 'block';
-      document.getElementById('auth-error').textContent = '❌ Invalid PIN';
-      document.getElementById('pinInput').value = '';
-    }
-  } catch(e) {
-    document.getElementById('auth-error').style.display = 'block';
-    document.getElementById('auth-error').textContent = '❌ Login failed';
-  }
-}
-
 function switchTab(t, btn) {
   document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
@@ -496,7 +441,6 @@ function switchTab(t, btn) {
   if(t==='violations') loadViolations();
   if(t==='keywords') loadKeywordsForCategory();
   if(t==='admins') loadAdmins();
-  if(t==='pins') loadPINs();
   if(t==='settings') loadSettings();
   if(t==='logs') loadLogs();
 }
@@ -570,33 +514,6 @@ async function removeAdmin(email) {
   if(!confirm('Remove '+email+'?')) return;
   await fetch(API+'/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,action:'remove'})});
   loadAdmins();
-}
-
-async function loadPINs() {
-  try {
-    const r = await fetch(API+'/pins');
-    const d = await r.json();
-    document.getElementById('pinsList').innerHTML = (d.pins||[]).map(p =>
-      \`<div class="item">PIN: <strong>\${p}</strong><button class="btn btn-sm btn-red" style="float:right" onclick="removePIN('\${p}')">Remove</button></div>\`
-    ).join('');
-  } catch(e){}
-}
-
-async function addPIN() {
-  const pin = document.getElementById('newPIN').value.trim();
-  if(!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-    alert('PIN must be 4-6 digits');
-    return;
-  }
-  await fetch(API+'/pins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin,action:'add'})});
-  document.getElementById('newPIN').value='';
-  loadPINs();
-}
-
-async function removePIN(pin) {
-  if(!confirm('Remove PIN '+pin+'?')) return;
-  await fetch(API+'/pins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin,action:'remove'})});
-  loadPINs();
 }
 
 async function resetUser(username) {
