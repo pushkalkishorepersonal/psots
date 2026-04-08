@@ -21,11 +21,10 @@ jobs:
         run: npm install
 
       - name: Store BOT_TOKEN in Cloudflare KV
-        run: |
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/3c89be83b87e4cf0b8f91b18bf2dc0e4/values/_bot_token" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "${{ secrets.BOT_TOKEN }}"
+        run: echo -n "${{ secrets.BOT_TOKEN }}" | npx wrangler kv:key put --binding=VIOLATIONS _bot_token --path=/dev/stdin
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
