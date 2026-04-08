@@ -21,7 +21,7 @@ jobs:
         run: npm install
 
       - name: Store BOT_TOKEN in Cloudflare KV
-        run: echo -n "${{ secrets.BOT_TOKEN }}" | npx wrangler kv:key put --binding=VIOLATIONS _bot_token --path=/dev/stdin
+        run: echo -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" | npx wrangler kv:key put --binding=VIOLATIONS _bot_token --path=/dev/stdin
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
