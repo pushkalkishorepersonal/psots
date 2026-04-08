@@ -834,18 +834,32 @@ export default {
         // Admins
         if (endpoint === 'admins' && request.method === 'GET') {
           const admins = await getAdmins(env.VIOLATIONS);
-          return new Response(JSON.stringify({ admins }), { headers: { 'Content-Type': 'application/json' } });
+          const adminTgIds = await env.VIOLATIONS.get('_admin_telegram_ids');
+          const tgIds = adminTgIds ? JSON.parse(adminTgIds) : {};
+          return new Response(JSON.stringify({ admins, telegram_ids: tgIds }), { headers: { 'Content-Type': 'application/json' } });
         }
 
         if (endpoint === 'admins' && request.method === 'POST') {
           const body = await request.json();
-          const admins = await getAdmins(env.VIOLATIONS);
-          if (body.action === 'add' && !admins.includes(body.email)) {
-            admins.push(body.email);
-          } else if (body.action === 'remove') {
-            admins.splice(admins.indexOf(body.email), 1);
+
+          if (body.action === 'add' || body.action === 'remove') {
+            const admins = await getAdmins(env.VIOLATIONS);
+            if (body.action === 'add' && !admins.includes(body.email)) {
+              admins.push(body.email);
+            } else if (body.action === 'remove') {
+              admins.splice(admins.indexOf(body.email), 1);
+            }
+            await saveAdmins(admins, env.VIOLATIONS);
           }
-          await saveAdmins(admins, env.VIOLATIONS);
+
+          // Register Telegram ID for admin
+          if (body.action === 'register-telegram') {
+            const adminTgIds = await env.VIOLATIONS.get('_admin_telegram_ids');
+            const tgIds = adminTgIds ? JSON.parse(adminTgIds) : {};
+            tgIds[body.email] = body.telegram_id;
+            await env.VIOLATIONS.put('_admin_telegram_ids', JSON.stringify(tgIds));
+          }
+
           return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
         }
 
