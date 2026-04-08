@@ -84,9 +84,9 @@ wrangler deploy
 You'll get a URL like: `https://psots-telegram-bot.yourname.workers.dev`
 
 ### Step 6: Set Telegram Webhook
-Replace the URL and token:
+Replace `YOUR_BOT_TOKEN` and `YOUR_WORKER_URL`:
 ```bash
-curl "https://api.telegram.org/bot8526973206:AAEJnvI4_bkJCDE-7q94E-HZl-YLabtQdcI/setWebhook?url=https://psots-telegram-bot.yourname.workers.dev"
+curl "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook?url=https://YOUR_WORKER_URL"
 ```
 
 Expected response:
@@ -180,7 +180,7 @@ Data stored:
 **Bot not responding?**
 1. Check webhook was set correctly:
 ```bash
-curl "https://api.telegram.org/bot8526973206:AAEJnvI4_bkJCDE-7q94E-HZl-YLabtQdcI/getWebhookInfo"
+curl "https://api.telegram.org/botYOUR_BOT_TOKEN/getWebhookInfo"
 ```
 
 2. Check bot has delete permissions in group
