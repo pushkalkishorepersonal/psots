@@ -567,7 +567,76 @@ loadStatus();
 </html>`;
 
 // USER PANEL HTML
-const USER_PANEL = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>My Violations - PSOTS</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;border-radius:10px;margin-bottom:20px;text-align:center}.header h1{font-size:24px;margin-bottom:10px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}.stat-card{background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.1)}.stat-card h3{color:#667eea;margin-bottom:10px}.stat-card .number{font-size:32px;font-weight:bold}.violation-item{background:white;padding:20px;border-radius:8px;margin-bottom:15px;border-left:4px solid #e74c3c;box-shadow:0 2px 5px rgba(0,0,0,0.1)}.violation-item h3{color:#e74c3c;margin-bottom:10px}.violation-item p{font-size:14px;color:#666;margin-bottom:10px}.btn{padding:12px 24px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;width:100%;margin-top:10px}.btn:hover{background:#764ba2}.no-violations{background:white;padding:40px;border-radius:8px;text-align:center}.no-violations h2{color:#27ae60;margin-bottom:10px}@media(max-width:600px){.container{padding:10px}.header h1{font-size:20px}}</style></head><body><div class="container"><div class="header"><h1>📊 Your Violations</h1><p>PSOTS Group - Last 30 Days</p></div><div id="content">Loading...</div></div><script>async function loadUserViolations(){const e=new URLSearchParams(window.location.search).get("id");if(!e)return void(document.getElementById("content").innerHTML="<p>Invalid user ID</p>");try{const t=await fetch("/api/user-violations?id="+e),i=await t.json();if(!i.violations)return void(document.getElementById("content").innerHTML='<div class="no-violations"><h2>✅ No Violations</h2><p>You\'re in good standing!</p></div>');let o=\`<div class="stats"><div class="stat-card"><h3>Total Violations</h3><div class="number">\${i.violations.count}</div></div><div class="stat-card"><h3>Days Since First Violation</h3><div class="number">\${Math.floor((Date.now()-i.violations.lastViolationTime)/86400000)}</div></div></div>\`;i.violations.history.forEach(e=>{o+=\`<div class="violation-item"><h3>\${e.type}</h3><p>\${new Date(e.timestamp).toLocaleDateString()}</p></div>\`}),o+=\`<button class="btn" onclick="appeal()">Appeal Violation</button>\`,document.getElementById("content").innerHTML=o}catch(e){document.getElementById("content").innerHTML="<p>Error loading data</p>"}}function appeal(){const e=prompt("Why should this violation be appealed? (Be specific)");e&&(alert("Appeal submitted. Admin will review within 24 hours."),localStorage.setItem("appeal_"+new URLSearchParams(window.location.search).get("id"),e))}loadUserViolations()</script></body></html>`;
+const USER_PANEL = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Violations - PSOTS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+    .header h1 { font-size: 24px; margin-bottom: 10px; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .stat-card h3 { color: #667eea; margin-bottom: 10px; font-size: 14px; }
+    .stat-card .number { font-size: 32px; font-weight: bold; color: #e74c3c; }
+    .violation-item { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #e74c3c; }
+    .violation-item h3 { color: #e74c3c; font-size: 14px; margin-bottom: 5px; }
+    .violation-item p { font-size: 12px; color: #666; }
+    .no-violations { background: white; padding: 40px; border-radius: 8px; text-align: center; }
+    .no-violations h2 { color: #27ae60; margin-bottom: 10px; }
+    .error { background: #fee; padding: 15px; border-radius: 8px; color: #c33; border: 1px solid #fcc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Your Violations</h1>
+      <p>PSOTS Group - Last 30 Days</p>
+    </div>
+    <div id="content">Loading...</div>
+  </div>
+
+  <script>
+    async function load() {
+      const userId = new URLSearchParams(window.location.search).get('id');
+      if (!userId) {
+        document.getElementById('content').innerHTML = '<div class="error">Invalid user ID</div>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/user-violations?id=' + userId);
+        const data = await res.json();
+
+        if (!data.violations) {
+          document.getElementById('content').innerHTML = '<div class="no-violations"><h2>✅ Clean Record</h2><p>No violations in the last 30 days</p></div>';
+          return;
+        }
+
+        let html = '<div class="stat-card"><h3>Total Violations</h3><div class="number">' + data.violations.count + '</div></div>';
+
+        if (data.violations.history && data.violations.history.length > 0) {
+          html += '<h3 style="margin-top: 20px; margin-bottom: 10px;">Violation History</h3>';
+          data.violations.history.forEach(v => {
+            const date = new Date(v.timestamp).toLocaleDateString();
+            html += '<div class="violation-item"><h3>' + v.type + '</h3><p>' + date + '</p></div>';
+          });
+        }
+
+        document.getElementById('content').innerHTML = html;
+      } catch (err) {
+        document.getElementById('content').innerHTML = '<div class="error">Error loading violations: ' + err.message + '</div>';
+        console.error('Error:', err);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>`;
 
 // MAIN HANDLER
 export default {
