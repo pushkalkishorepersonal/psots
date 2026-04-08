@@ -679,6 +679,14 @@ export default {
           const hasToken = !!botToken;
           const tokenPreview = botToken ? botToken.substring(0, 10) + '...' : 'NOT SET';
 
+          // List all keys in KV to debug
+          const kvList = await env.VIOLATIONS.list();
+          const kvKeys = kvList.keys.map(k => k.name);
+
+          // Check if _bot_token exists
+          const botTokenExists = kvKeys.includes('_bot_token');
+          const botTokenValue = botTokenExists ? await env.VIOLATIONS.get('_bot_token') : null;
+
           // Test webhook by getting bot info
           let botInfo = null;
           if (botToken) {
@@ -695,7 +703,13 @@ export default {
             hasToken,
             tokenPreview,
             botInfo,
-            kvWorking: !!env.VIOLATIONS
+            kvWorking: !!env.VIOLATIONS,
+            kvDebug: {
+              totalKeys: kvKeys.length,
+              keys: kvKeys,
+              botTokenExists,
+              botTokenPreview: botTokenValue ? botTokenValue.substring(0, 10) + '...' : 'null'
+            }
           }), { headers: { 'Content-Type': 'application/json' } });
         }
 
