@@ -1,0 +1,84 @@
+/* ============================================================
+   PSOTS Layout — nav, disclaimer bar, page wrappers
+   ============================================================ */
+
+/* ── DISCLAIMER BAR ──────────────────────────────────────── */
+.disclaimer-bar {
+  background: var(--jade); color: rgba(255,255,255,0.7);
+  padding: 7px 2rem; font-size: 11.5px; text-align: center;
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: var(--z-bar); letter-spacing: 0.2px; line-height: 1.5;
+}
+.disclaimer-bar strong { color: var(--gold-pale); }
+
+/* ── NAV ─────────────────────────────────────────────────── */
+.main-nav {
+  position: fixed; top: 34px; left: 0; right: 0;
+  z-index: var(--z-nav); background: rgba(250,246,240,0.96);
+  backdrop-filter: blur(24px); border-bottom: 1px solid var(--border);
+  height: 64px; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 3.5rem;
+  transition: box-shadow var(--t-slow);
+}
+.main-nav.scrolled { box-shadow: 0 4px 24px rgba(26,18,8,0.08); }
+
+.nav-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
+.nav-logo {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--jade); color: var(--gold-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 15px; font-weight: 700;
+}
+.nav-brand-name  { font-family: var(--font-serif); font-size: 16px; font-weight: 500; color: var(--ink); }
+.nav-brand-sub   { font-size: 9.5px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+.nav-back        { font-size: 13px; color: var(--jade); font-weight: 600; text-decoration: none; }
+.nav-back:hover  { color: var(--jade-light); }
+
+/* ── PAGE WRAPPERS ───────────────────────────────────────── */
+.page-top { padding-top: 98px; }
+
+.card-page {
+  padding-top: 110px; padding-bottom: 4rem;
+  min-height: 100vh; display: flex;
+  align-items: flex-start; justify-content: center;
+}
+.card-page .card {
+  width: 100%; max-width: 520px; margin: 0 1rem;
+}
+
+/* ── ADMIN LAYOUT ────────────────────────────────────────── */
+.admin-topbar {
+  background: var(--jade); color: white; padding: 0 1.5rem;
+  height: 56px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
+.admin-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-serif); font-size: 1rem; }
+.admin-logo {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: rgba(255,255,255,0.1); color: var(--gold-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px;
+}
+.admin-tabs { display: flex; gap: 2px; }
+.admin-tab {
+  padding: 6px 14px; border-radius: 7px; font-size: 12.5px;
+  font-weight: 600; cursor: pointer; border: none;
+  background: none; color: rgba(255,255,255,0.6);
+  transition: var(--t-fast); font-family: var(--font-sans);
+}
+.admin-tab.active, .admin-tab:hover { background: rgba(255,255,255,0.12); color: white; }
+.admin-user { font-size: 12px; color: rgba(255,255,255,0.55); }
+.admin-signout {
+  background: rgba(255,255,255,0.1); color: white; border: none;
+  padding: 5px 12px; border-radius: 7px; font-size: 12px;
+  cursor: pointer; font-family: var(--font-sans);
+}
+.admin-signout:hover { background: rgba(255,255,255,0.2); }
+.admin-wrap { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+.admin-page { display: none; }
+.admin-page.active { display: block; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-nav { padding: 0 1.2rem; }
+}

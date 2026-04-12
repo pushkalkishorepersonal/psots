@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PSOTS — My Profile</title>
+  <meta name="description" content="Your PSOTS resident profile — manage your details, consent and account."/>
+  <link rel="stylesheet" href="/css/tokens.css"/>
+  <link rel="stylesheet" href="/css/base.css"/>
+  <link rel="stylesheet" href="/css/components.css"/>
+  <link rel="stylesheet" href="/css/layout.css"/>
+</head>
+<body>
+
+<div class="disclaimer-bar">
+  🏘️ <strong>Resident Initiative</strong> — Independently built by PSOTS residents. Not affiliated with the RWA.
+</div>
+
+<nav class="nav" id="mainNav">
+  <a class="nav-brand" href="/">
+    <div class="nav-logo">PS</div>
+    <div>
+      <div class="nav-brand-name">PSOTS</div>
+      <div class="nav-brand-sub">Prestige Song of the South</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link" onclick="location.href='/'">Home</button>
+    <button class="nav-link active">Profile</button>
+    <button class="nav-link" onclick="location.href='/marketplace.html'">Marketplace</button>
+  </div>
+  <button class="nav-link" id="btnNavSignOut" style="color:var(--red)">Sign Out</button>
+</nav>
+
+<div class="page-top-offset" id="app">
+  <div style="text-align:center;padding:4rem">
+    <div class="loader loader-dark loader-lg"></div>
+    <p class="t-small" style="margin-top:1rem">Loading your profile...</p>
+  </div>
+</div>
+
+<div class="toast" id="globalToast"></div>
+<div class="modal-backdrop" id="globalModal"></div>
+
+<script type="module" src="/js/pages/profile/index.js"></script>
+</body>
+</html>

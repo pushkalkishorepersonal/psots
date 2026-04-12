@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PSOTS — Resident Access</title>
+  <meta name="description" content="Register your flat and get verified access to PSOTS community features."/>
+  <link rel="stylesheet" href="/css/tokens.css"/>
+  <link rel="stylesheet" href="/css/base.css"/>
+  <link rel="stylesheet" href="/css/components.css"/>
+  <link rel="stylesheet" href="/css/layout.css"/>
+</head>
+<body>
+
+<div class="disclaimer-bar">
+  🏘️ <strong>Resident Initiative</strong> — Independently built by PSOTS residents. Not affiliated with the RWA.
+</div>
+
+<nav class="nav" id="mainNav">
+  <a class="nav-brand" href="/">
+    <div class="nav-logo">PS</div>
+    <div>
+      <div class="nav-brand-name">PSOTS</div>
+      <div class="nav-brand-sub">Prestige Song of the South</div>
+    </div>
+  </a>
+  <a class="nav-back" href="/">← Portal</a>
+</nav>
+
+<div class="page-center" id="app">
+  <div class="page-narrow">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-icon">PS</div>
+        <div class="card-header-title">Resident Access</div>
+        <div class="card-header-sub">Register your flat to get your verified blue tick and access all resident features.</div>
+      </div>
+      <div class="card-body" id="cardBody">
+        <div style="text-align:center;padding:2rem">
+          <div class="loader loader-dark loader-lg"></div>
+          <p class="t-small" style="margin-top:1rem">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="globalToast"></div>
+<div class="modal-backdrop" id="globalModal"></div>
+
+<script type="module" src="/js/pages/residents/index.js"></script>
+</body>
+</html>

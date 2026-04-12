@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PSOTS — Admin Panel</title>
+  <link rel="stylesheet" href="/css/tokens.css"/>
+  <link rel="stylesheet" href="/css/base.css"/>
+  <link rel="stylesheet" href="/css/components.css"/>
+  <link rel="stylesheet" href="/css/layout.css"/>
+</head>
+<body style="background:#f0f2f5">
+
+<!-- LOGIN SCREEN (shown before auth) -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">PS</div>
+    <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:400;margin-bottom:6px">Admin Panel</h2>
+    <p class="t-small" style="margin-bottom:1.5rem;line-height:1.6">Sign in with your authorised admin Google account.</p>
+    <button class="btn btn-google" id="btnAdminLogin">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="alert" id="loginErr" style="margin-top:1rem"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL (shown after auth) -->
+<div id="adminApp" class="hidden">
+  <div class="admin-topbar">
+    <div class="admin-topbar-brand">
+      <div class="admin-topbar-logo">PS</div>
+      PSOTS Admin
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-page="residents">Residents</button>
+      <button class="admin-tab" data-page="flats">Flats</button>
+      <button class="admin-tab" data-page="appeals">Appeals</button>
+      <button class="admin-tab" data-page="admins">Admins</button>
+      <button class="admin-tab" data-page="audit">Audit Log</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:12px;color:rgba(255,255,255,.55)" id="adminEmailDisp"></span>
+      <button class="btn btn-outline btn-sm" id="btnAdminLogout" style="color:white;border-color:rgba(255,255,255,.3)">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-wrap">
+
+    <!-- PAGE: RESIDENTS -->
+    <div class="admin-page active" id="pageResidents">
+      <div class="stats-grid">
+        <div class="stat-card s-total"><div class="stat-num" id="stTotal">—</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card s-pending"><div class="stat-num" id="stPend">—</div><div class="stat-lbl">Pending</div></div>
+        <div class="stat-card s-approved"><div class="stat-num" id="stAppr">—</div><div class="stat-lbl">Approved</div></div>
+        <div class="stat-card s-rejected"><div class="stat-num" id="stRejt">—</div><div class="stat-lbl">Rejected</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="tabs-bar">
+          <button class="tab-btn active" data-filter="all">All</button>
+          <button class="tab-btn" data-filter="pending">⏳ Pending</button>
+          <button class="tab-btn" data-filter="pending_owner">🔄 Owner</button>
+          <button class="tab-btn" data-filter="pending_primary">👥 Primary</button>
+          <button class="tab-btn" data-filter="approved">✅ Approved</button>
+          <button class="tab-btn" data-filter="rejected">❌ Rejected</button>
+          <button class="tab-btn" data-filter="inactive">⚫ Inactive</button>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="resSearch" placeholder="Name, flat, phone, email..."/>
+        </div>
+        <select class="filter-select" id="towerFilter">
+          <option value="">All Towers</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>8</option><option>9</option><option>10</option><option>11</option>
+          <option>12</option><option>14</option><option>15</option><option>16</option><option>17</option>
+        </select>
+        <select class="filter-select" id="typeFilter">
+          <option value="">All Types</option>
+          <option value="owner">Owner</option>
+          <option value="tenant">Tenant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Resident</th><th>Flat</th><th>Type / Role</th>
+              <th>Status</th><th>Lease / Notes</th><th>Submitted</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resTableBody">
+            <tr><td colspan="7"><div class="table-empty"><div class="loader loader-dark"></div> Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: FLATS -->
+    <div class="admin-page" id="pageFlats">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="flatSearch" placeholder="Search flat number or tower..."/>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Flat</th><th>Tower</th><th>Occupants</th><th>Owner</th><th>Tenant(s)</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="flatTableBody">
+            <tr><td colspan="7"><div class="table-empty">Loading flat data...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: APPEALS -->
+    <div class="admin-page" id="pageAppeals">
+      <div id="appealsList">
+        <div class="table-empty">Loading appeals...</div>
+      </div>
+    </div>
+
+    <!-- PAGE: ADMINS -->
+    <div class="admin-page" id="pageAdmins">
+      <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:400;margin-bottom:4px">Admin Management</div>
+      <p class="t-small" style="margin-bottom:1.5rem">Only the super admin can add or remove admins.</p>
+      <div id="addAdminSection" class="hidden">
+        <div class="card" style="padding:1.2rem;margin-bottom:1.5rem">
+          <p class="t-label" style="margin-bottom:.8rem">Add New Admin</p>
+          <div style="display:flex;gap:10px">
+            <input class="field-input" id="newAdminEmail" type="email" placeholder="admin@gmail.com" style="flex:1"/>
+            <button class="btn btn-jade btn-sm" id="btnAddAdmin">Add Admin</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="adminListWrap">
+        <div class="table-empty">Loading...</div>
+      </div>
+    </div>
+
+    <!-- PAGE: AUDIT LOG -->
+    <div class="admin-page" id="pageAudit">
+      <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:400;margin-bottom:4px">Audit Log</div>
+      <p class="t-small" style="margin-bottom:1.5rem">All admin actions. Immutable.</p>
+      <div id="auditList"><div class="table-empty">Loading...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-backdrop" id="rejectModal">
+  <div class="modal">
+    <div class="modal-title">Reject Resident</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:1.2rem">Rejecting: <strong id="rejectResName"></strong></p>
+    <div class="field">
+      <label class="field-label">Reason (required)</label>
+      <select class="field-select" id="rejectCategory">
+        <option value="">Select reason</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Additional Note (optional)</label>
+      <textarea class="field-textarea" id="rejectNote" placeholder="Context for the resident..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btnConfirmReject">Confirm Rejection</button>
+      <button class="btn btn-outline btn-sm" id="btnCancelReject">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="globalToast"></div>
+
+<script type="module" src="/js/pages/admin/index.js"></script>
+</body>
+</html>
