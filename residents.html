@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PSOTS — Resident Access</title>
   <meta name="description" content="Register your flat and get verified access to PSOTS community features."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/css/tokens.css"/>
   <link rel="stylesheet" href="/css/base.css"/>
   <link rel="stylesheet" href="/css/components.css"/>
@@ -27,26 +29,85 @@
   <a class="nav-back" href="/">← Portal</a>
 </nav>
 
-<div class="page-center" id="app">
-  <div class="page-narrow">
+<!-- ── HERO ───────────────────────────────────────────────── -->
+<div class="reg-hero" id="regHero">
+  <div class="reg-hero-card">
+    <div class="reg-hero-icon">PS</div>
+    <h1 class="reg-hero-title">Resident Access</h1>
+    <p class="reg-hero-sub">Register your flat to get your verified blue tick and unlock all PSOTS community features.</p>
+    <div class="reg-hero-feats">
+      <span class="reg-feat">🔵 Blue tick</span>
+      <span class="reg-feat">🛒 Marketplace</span>
+      <span class="reg-feat">🤖 Telegram bot</span>
+      <span class="reg-feat">📋 Directory</span>
+    </div>
+    <button class="btn btn-jade" id="btnOpenReg" style="max-width:300px;margin:0 auto">
+      Get Verified Access →
+    </button>
+    <p class="reg-hero-note">Already registered? Signing in will show your status.</p>
+  </div>
+</div>
+
+<!-- ── STATUS VIEW ────────────────────────────────────────── -->
+<div class="reg-status-view hidden" id="regStatusView">
+  <div class="reg-status-inner">
     <div class="card">
-      <div class="card-header">
-        <div class="card-header-icon">PS</div>
-        <div class="card-header-title">Resident Access</div>
-        <div class="card-header-sub">Register your flat to get your verified blue tick and access all resident features.</div>
+      <div class="card-header" style="text-align:center">
+        <div class="card-icon">PS</div>
+        <h1 style="font-family:var(--font-serif);font-size:1.35rem;font-weight:500;color:white;margin-bottom:4px">Your Registration</h1>
+        <p style="font-size:12px;color:rgba(255,255,255,0.55)">PSOTS Resident Verification</p>
       </div>
-      <div class="card-body" id="cardBody">
-        <div style="text-align:center;padding:2rem">
-          <div class="loader loader-dark loader-lg"></div>
-          <p class="t-small" style="margin-top:1rem">Loading...</p>
-        </div>
+      <div class="card-body">
+        <div id="statusCard"></div>
+        <div id="statusActions"></div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="toast" id="globalToast"></div>
-<div class="modal-backdrop" id="globalModal"></div>
+<!-- ── ONBOARDING MODAL ───────────────────────────────────── -->
+<div class="ob-overlay" id="obOverlay">
+  <div class="ob-modal" role="dialog" aria-modal="true" aria-labelledby="obStepTitle">
+
+    <!-- Header -->
+    <div class="ob-header">
+      <button class="ob-nav-btn hidden" id="obBtnBack" aria-label="Go back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/>
+        </svg>
+      </button>
+      <div class="ob-header-brand">
+        <div class="ob-brand-icon">PS</div>
+        <span class="ob-step-title" id="obStepTitle">Sign In</span>
+      </div>
+      <button class="ob-nav-btn" id="obBtnClose" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="ob-stepper">
+      <div class="ob-sdot active" id="sd1"></div>
+      <div class="ob-sline" id="sl1"></div>
+      <div class="ob-sdot" id="sd2"></div>
+      <div class="ob-sline" id="sl2"></div>
+      <div class="ob-sdot" id="sd3"></div>
+      <div class="ob-sline" id="sl3"></div>
+      <div class="ob-sdot" id="sd4"></div>
+    </div>
+
+    <!-- Body (panels injected by JS) -->
+    <div class="ob-body" id="obBody">
+      <div style="text-align:center;padding:3rem 0">
+        <div class="loader loader-dark"></div>
+        <p class="t-small" style="margin-top:1rem;color:var(--muted)">Loading...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <script type="module" src="/js/pages/residents/index.js"></script>
 </body>
