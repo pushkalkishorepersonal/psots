@@ -22,11 +22,12 @@ import {
 } from '../../config/constants.js';
 
 // ── STATE ─────────────────────────────────────────────────
-let _step = 1;
-let _selType = null;   // 'owner' | 'tenant'
-let _selOwnerSt = null;   // 'resident' | 'non_resident' | 'nri'
-let _flatData = {};
-let _flatSelector = null;
+let _step          = 1;
+let _selType       = null;   // 'owner' | 'tenant'
+let _selOwnerSt    = null;   // 'resident' | 'non_resident' | 'nri'
+let _flatData      = {};
+let _flatSelector  = null;
+let _steps         = null;
 let _confirmResult = null;
 
 const TOTAL_STEPS = 5;
@@ -269,12 +270,10 @@ document.getElementById('cardBody').innerHTML = `
 `;
 
 // Render steps
-// Steps.render disabled
+_steps = Steps.init('stepsContainer', ['Login', 'Type', 'Details', 'Privacy', 'Done']);
 
 // Mount flat selector
-FlatSelector.init('flatSelectorMount', {
-  onChange: () => { }
-});
+_flatSelector = FlatSelector.init('flatSelectorMount', {});
 
 // ── EVENT BINDINGS ────────────────────────────────────────
 
@@ -384,15 +383,15 @@ document.getElementById('btnBackToDetails').onclick = () => _goStep(3);
 // Go to consent step
 document.getElementById('btnGoConsent').onclick = async () => {
   const name = document.getElementById('resName').value.trim();
-  const vals = _flatSelector.getValues();
+  const vals  = _flatSelector.getValue();
   const phone = document.getElementById('contPhone').value.trim();
 
-  if (!name) { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
-  if (!vals) { _setAlert('detailsAlert', 'error', 'Select your tower, floor and unit'); return; }
+  if (!name)  { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
+  if (!vals)  { _setAlert('detailsAlert', 'error', 'Enter your flat number'); return; }
   if (!phone) { _setAlert('detailsAlert', 'error', 'Enter your contact phone'); return; }
 
-  const { valid, errors } = flatService.validate(vals.tower, vals.floor, vals.unit);
-  if (!valid) { _setAlert('detailsAlert', 'error', errors[0]); return; }
+  const { valid, error } = flatService.validate(vals.tower, vals.floor, vals.unit);
+  if (!valid) { _setAlert('detailsAlert', 'error', error); return; }
 
   if (_selType === 'tenant') {
     const ls = document.getElementById('leaseStart').value;
@@ -602,7 +601,7 @@ function _goStep(n) {
   _step = n;
   document.querySelectorAll('.reg-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`panel${n}`)?.classList.add('active');
-  // Steps.update removed - Steps uses setActive pattern
+  _steps?.setActive(n);
 }
 
 function _selectType(t) {
