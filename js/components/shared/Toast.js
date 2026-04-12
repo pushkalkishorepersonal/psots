@@ -39,4 +39,4 @@ const Toast = {
   warn:    (msg, ms) => Toast.show(msg, 'warn',    ms),
 };
 
-export default Toast;
+export { Toast };
