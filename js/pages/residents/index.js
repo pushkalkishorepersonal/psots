@@ -7,7 +7,6 @@
 import session from '../../core/auth.js';
 import logger from '../../core/logger.js';
 import { Toast } from '../../components/shared/Toast.js';
-import { Steps } from '../../components/shared/Steps.js';
 import { FlatSelector } from '../../components/resident/FlatSelector.js';
 import residentService from '../../services/resident.service.js';
 import rateLimitService from '../../services/rateLimit.service.js';
@@ -27,18 +26,10 @@ let _selType       = null;   // 'owner' | 'tenant'
 let _selOwnerSt    = null;   // 'resident' | 'non_resident' | 'nri'
 let _flatData      = {};
 let _flatSelector  = null;
-let _steps         = null;
 let _confirmResult = null;
 
-const TOTAL_STEPS = 5;
-
 // ── RENDER SHELL ──────────────────────────────────────────
-document.getElementById('cardBody').innerHTML = `
-  <div class="steps"
-    data-step1="Login" data-step2="Type" data-step3="Details"
-    data-step4="Privacy" data-step5="Done"
-    id="stepsContainer"></div>
-
+document.getElementById('obBody').innerHTML = `
   <div class="rate-bar" id="rateBar">
     ⚠️ Too many attempts. Wait <span id="rateTimer">60</span>s.
   </div>
@@ -253,18 +244,40 @@ document.getElementById('cardBody').innerHTML = `
     <p class="t-small" style="text-align:center;margin-top:1rem">Verification within 24–48 hours. Telegram + email notification on approval.</p>
   </div>
 
-  <!-- PANEL 5: STATUS -->
-  <div class="reg-panel" id="panel5">
-    <div class="status-card" id="statusCard"></div>
-    <div id="statusActions"></div>
-  </div>
 `;
-
-// Render steps
-_steps = Steps.init('stepsContainer', ['Login', 'Type', 'Details', 'Privacy', 'Done']);
 
 // Mount flat selector
 _flatSelector = FlatSelector.init('flatSelectorMount', {});
+
+// ── MODAL CONTROLS ────────────────────────────────────────
+const _STEP_TITLES = { 1: 'Sign In', 2: 'Resident Type', 3: 'Your Details', 4: 'Privacy & Profile' };
+
+function _openModal() {
+  document.getElementById('obOverlay').classList.add('open');
+  document.getElementById('regHero').classList.add('hidden');
+}
+
+function _closeModal() {
+  document.getElementById('obOverlay').classList.remove('open');
+}
+
+function _updateModalStep(n) {
+  const title = document.getElementById('obStepTitle');
+  if (title) title.textContent = _STEP_TITLES[n] || '';
+  document.getElementById('obBtnBack')?.classList.toggle('hidden', n <= 1);
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`sd${i}`)?.classList.toggle('active', i === n);
+    document.getElementById(`sd${i}`)?.classList.toggle('done', i < n);
+    if (i < 4) document.getElementById(`sl${i}`)?.classList.toggle('done', i < n);
+  }
+}
+
+document.getElementById('btnOpenReg').onclick  = () => _goStep(1);
+document.getElementById('obBtnBack').onclick   = () => _goStep(_step - 1);
+document.getElementById('obBtnClose').onclick  = () => {
+  _closeModal();
+  document.getElementById('regHero').classList.remove('hidden');
+};
 
 // ── EVENT BINDINGS ────────────────────────────────────────
 
@@ -499,7 +512,9 @@ document.getElementById('btnSubmit').onclick = async () => {
 
 // ── SHOW STATUS PANEL ─────────────────────────────────────
 function _showStatus(d) {
-  _goStep(5);
+  _closeModal();
+  document.getElementById('regHero')?.classList.add('hidden');
+  document.getElementById('regStatusView')?.classList.remove('hidden');
 
   const tick = d.badges?.blueTick ? '<span class="blue-tick">✓</span>' : '';
 
@@ -592,7 +607,9 @@ function _goStep(n) {
   _step = n;
   document.querySelectorAll('.reg-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`panel${n}`)?.classList.add('active');
-  // step indicator updated by CSS
+  _openModal();
+  _updateModalStep(n);
+  document.getElementById('obBody')?.scrollTo({ top: 0 });
 }
 
 function _selectType(t) {
@@ -648,7 +665,11 @@ window.addEventListener('scroll', () => {
 
 // ── AUTH LISTENER ─────────────────────────────────────────
 session.onChange(({ user, resident }) => {
-  if (!user) { _goStep(1); return; }
+  if (!user) {
+    _closeModal();
+    document.getElementById('regHero')?.classList.remove('hidden');
+    return;
+  }
   if (resident) { _showStatus(resident); return; }
   _goStep(2);
   const el = document.getElementById('userDisp');
