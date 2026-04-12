@@ -85,19 +85,10 @@ export const EVENTS_HTML = `<!DOCTYPE html>
     <script>
         async function loadEvents() {
             try {
-                const mockEvents = [
-                    { title: "Chhath Puja 2026", date: "2026-11-02", desc: "The grand annual celebration by the ghat. A resident-led vibrant spiritual festival.", approved: true },
-                    { title: "Durga Puja Planning", date: "2026-10-01", desc: "Executive committee meeting for festival planning and logistics.", approved: false },
-                    { title: "Residents Monthly Meeting", date: "2026-05-15", desc: "Discussing society maintenance, CAM charges, and safety audits.", approved: true }
-                ];
-                const now = new Date();
-                const forwardThreshold = new Date();
-                forwardThreshold.setDate(now.getDate() + 90);
+                const res = await fetch('/api/events');
+                const data = await res.json();
+                const visibleEvents = (data.events || []).filter(e => e.approved);
                 const listEl = document.getElementById('event-list');
-                const visibleEvents = mockEvents.filter(e => {
-                    const eventDate = new Date(e.date);
-                    return (eventDate <= forwardThreshold && eventDate >= now) || e.approved;
-                });
                 if (visibleEvents.length === 0) {
                     listEl.innerHTML = '<div class="empty-state"><h3>No imminent events</h3><p>Check back later for upcoming community activities.</p></div>';
                     return;
@@ -822,6 +813,7 @@ header h1{font-size:20px}
       <button class="tab-btn" onclick="switchTab('residents',this)">🏡 Residents</button>
       <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ Settings</button>
       <button class="tab-btn" onclick="switchTab('logs',this)">📝 Logs</button>
+      <button class="tab-btn" onclick="switchTab('events',this)">📅 Events</button>
     </div>
 
     <!-- SUPERADMIN PANEL — hidden by default, shown only for pushkalkishore@gmail.com -->
@@ -956,6 +948,24 @@ header h1{font-size:20px}
       <h2 style="margin-bottom:16px">📝 Deleted Messages (Last 30 Days)</h2>
       <div id="logsList">Loading...</div>
     </div>
+
+    <div id="events" class="tab">
+      <h2 style="margin-bottom:16px">📅 Society Events</h2>
+      <div style="background:#f9f9f9; border-radius:8px; padding:16px; margin-bottom:20px;">
+        <div class="input-row" style="flex-wrap:wrap; gap:10px;">
+          <input type="text" id="new-event-title" placeholder="Event title (e.g. Chhath Puja 2027)" style="flex:2; min-width:180px;">
+          <input type="date" id="new-event-date" style="flex:1; min-width:140px;">
+        </div>
+        <input type="text" id="new-event-desc" placeholder="Short description..."
+          style="width:100%; margin-top:10px; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+          <input type="checkbox" id="new-event-approved" style="width:16px; height:16px;">
+          <label for="new-event-approved" style="font-size:13px; color:#555;">Published (visible on public events page)</label>
+        </div>
+        <button class="btn" style="margin-top:12px;" onclick="addEvent()">Add Event</button>
+      </div>
+      <div id="eventsList">Loading...</div>
+    </div>
   </div>
 </div>
 
@@ -1054,6 +1064,54 @@ function switchTab(t, btn) {
   if(t==='residents') loadResidents();
   if(t==='settings') loadSettings();
   if(t==='logs') loadLogs();
+  if(t==='events') loadEvents();
+}
+
+async function loadEvents() {
+  try {
+    const r = await fetch(API + '/events');
+    const d = await r.json();
+    document.getElementById('eventsList').innerHTML = !(d.events||[]).length
+      ? '<p style="color:#999">No events yet. Add one above.</p>'
+      : d.events.map(e => \`<div class="item" style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px; margin-bottom:8px; background:#fff; border-radius:8px; border:1px solid #eee;">
+          <div>
+            <strong>\${e.title}</strong>
+            <span style="color:\${e.approved ? '#16a34a' : '#f59e0b'}; font-size:12px; margin-left:8px; font-weight:700;">
+              \${e.approved ? '✓ Published' : '⏸ Draft'}
+            </span>
+            <div style="font-size:12px; color:#888; margin-top:4px;">\${e.date}\${e.desc ? ' — ' + e.desc : ''}</div>
+          </div>
+          <button class="btn btn-sm btn-red" onclick="deleteEvent('\${e.eventId}')">Delete</button>
+        </div>\`).join('');
+  } catch(e) { document.getElementById('eventsList').innerHTML = '<p style="color:red">Error loading events.</p>'; }
+}
+
+async function addEvent() {
+  const title = document.getElementById('new-event-title').value.trim();
+  const date = document.getElementById('new-event-date').value;
+  const desc = document.getElementById('new-event-desc').value.trim();
+  const approved = document.getElementById('new-event-approved').checked;
+  if (!title || !date) return alert('Title and date are required.');
+  await fetch(API + '/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, date, desc, approved })
+  });
+  document.getElementById('new-event-title').value = '';
+  document.getElementById('new-event-date').value = '';
+  document.getElementById('new-event-desc').value = '';
+  document.getElementById('new-event-approved').checked = false;
+  loadEvents();
+}
+
+async function deleteEvent(eventId) {
+  if (!confirm('Delete this event?')) return;
+  await fetch(API + '/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'delete', eventId })
+  });
+  loadEvents();
 }
 
 let activeGroup = '';

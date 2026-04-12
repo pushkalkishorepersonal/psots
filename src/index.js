@@ -433,6 +433,34 @@ export default {
           return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
         }
 
+        if (endpoint === 'events' && request.method === 'GET') {
+          const list = await env.VIOLATIONS.list({ prefix: 'event_' });
+          const events = [];
+          for (const item of list.keys) {
+            const data = JSON.parse(await env.VIOLATIONS.get(item.name));
+            events.push({ ...data, eventId: item.name });
+          }
+          events.sort((a, b) => new Date(a.date) - new Date(b.date));
+          return new Response(JSON.stringify({ events }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
+        if (endpoint === 'events' && request.method === 'POST') {
+          const body = await request.json();
+          if (body.action === 'delete' && body.eventId) {
+            await env.VIOLATIONS.delete(body.eventId);
+            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          }
+          const event = {
+            title: body.title,
+            date: body.date,
+            desc: body.desc || '',
+            approved: body.approved || false,
+            createdAt: new Date().toISOString()
+          };
+          await env.VIOLATIONS.put(`event_${Date.now()}`, JSON.stringify(event));
+          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
         if (endpoint === 'logs') {
           const list = await env.AUDIT_LOG.list();
           const logs = [];
