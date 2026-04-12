@@ -74,3 +74,55 @@ export async function fetchChatMember(chatId, userId, token) {
     return null;
   }
 }
+
+export async function muteChatMember(chatId, userId, token, durationSeconds = 3600) {
+  const untilDate = Math.floor(Date.now() / 1000) + durationSeconds;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/restrictChatMember`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId, user_id: userId,
+        until_date: untilDate,
+        permissions: {
+          can_send_messages: false,
+          can_send_audios: false,
+          can_send_documents: false,
+          can_send_photos: false,
+          can_send_videos: false,
+          can_send_video_notes: false,
+          can_send_voice_notes: false,
+          can_send_polls: false,
+          can_send_other_messages: false,
+          can_add_web_page_previews: false
+        }
+      })
+    });
+  } catch(e) {}
+}
+
+export async function kickChatMember(chatId, userId, token) {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/banChatMember`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId, revoke_messages: false })
+    });
+    // Unban immediately — kick without permanent ban so they can rejoin if admin approves
+    await fetch(`https://api.telegram.org/bot${token}/unbanChatMember`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId, only_if_banned: true })
+    });
+  } catch(e) {}
+}
+
+export async function banChatMember(chatId, userId, token) {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/banChatMember`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId, revoke_messages: false })
+    });
+  } catch(e) {}
+}
