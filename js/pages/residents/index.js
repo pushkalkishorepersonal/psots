@@ -9,9 +9,9 @@ import { logger }            from '../../core/logger.js';
 import Toast             from '../../components/shared/Toast.js';
 import Steps             from '../../components/shared/Steps.js';
 import FlatSelector      from '../../components/resident/FlatSelector.js';
-import { residentService }   from '../../services/resident.service.js';
-import { rateLimitService }  from '../../services/rateLimit.service.js';
-import { flatService }       from '../../services/flat.service.js';
+import residentService   from '../../services/resident.service.js';
+import rateLimitService  from '../../services/rateLimit.service.js';
+import flatService       from '../../services/flat.service.js';
 import { auth }              from '../../core/firebase.js';
 import {
   GoogleAuthProvider, signInWithPopup,
