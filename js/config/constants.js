@@ -8,7 +8,7 @@ export const SUPER_ADMIN = 'pushkalkishore@gmail.com';
 
 // ── WORKER URL ────────────────────────────────────────────
 // Replace with your actual Cloudflare Worker URL
-export const WORKER_URL = 'https://psots-telegram-bot-v2.YOUR-SUBDOMAIN.workers.dev';
+export const WORKER_URL = 'https://psots-telegram-bot-v2.pushkalkishore.workers.dev';
 
 // ── TOWER CONFIGURATION ───────────────────────────────────
 // maxFloor: highest floor number (no floor 13)
