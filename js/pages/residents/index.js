@@ -18,7 +18,7 @@ import {
   RecaptchaVerifier, signInWithPhoneNumber
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
-  WORKER_URL, ESCALATION_TO_ADMIN_DAYS
+  WORKER_URL, ESCALATION_DAYS
 } from '../../config/constants.js';
 
 // ── STATE ─────────────────────────────────────────────────
@@ -468,7 +468,7 @@ document.getElementById('btnSubmit').onclick = async () => {
     recordedAt:   new Date().toISOString(),
   };
 
-  const escalationDate = new Date(Date.now() + ESCALATION_TO_ADMIN_DAYS * 86400000).toISOString();
+  const escalationDate = new Date(Date.now() + ESCALATION_DAYS * 86400000).toISOString();
 
   const data = {
     uid: user.uid, name: _flatData.name,
