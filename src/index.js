@@ -100,8 +100,16 @@ export default {
             const path = url.searchParams.get('path');
             if (!botToken || !path) return new Response('Not Found', { status: 404 });
             
-            const res = await fetch(`https://api.telegram.org/file/bot${botToken}/${path}`);
-            return new Response(res.body, { headers: { 'Content-Type': res.headers.get('Content-Type') || 'image/jpeg', 'Cache-Control': 'public, max-age=86400' } });
+            const res = await fetch(`https://api.telegram.org/file/bot${botToken}/${path}`, {
+              cf: { cacheEverything: true, cacheTtl: 86400 }
+            });
+            return new Response(res.body, {
+              headers: {
+                'Content-Type': res.headers.get('Content-Type') || 'image/jpeg',
+                'Cache-Control': 'public, max-age=86400'
+              },
+              cf: { cacheEverything: true, cacheTtl: 86400 }
+            });
         }
 
         if (endpoint === 'webhook-status') {
