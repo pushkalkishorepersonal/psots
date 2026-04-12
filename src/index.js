@@ -399,6 +399,8 @@ export default {
           for (const item of list.keys) {
             const data = JSON.parse(await env.AUDIT_LOG.get(item.name));
             if (new Date(data.timestamp).getTime() > thirtyDaysAgo) {
+              // Filter by group if group param provided
+              if (group && String(data.chatId) !== String(group)) continue;
               logs.push(data);
             }
           }
