@@ -1165,8 +1165,6 @@ async function loadLogs() {
   } catch(e){}
 }
 
-loadGroups();
-loadStatus();
 </script>
 </body>
 </html>`;
