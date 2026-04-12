@@ -943,6 +943,8 @@ async function handleGoogleLogin(response) {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     const email = payload.email;
     currentUserEmail = email;
+    localStorage.setItem('psots_admin_email', email);
+    localStorage.setItem('psots_admin_token', response.credential);
 
     // Fetch allowed groups via RBAC
     const res = await fetch(API + '/my-groups?email=' + encodeURIComponent(email));
@@ -990,6 +992,8 @@ async function handleGoogleLogin(response) {
 }
 
 function logout() {
+  localStorage.removeItem('psots_admin_email');
+  localStorage.removeItem('psots_admin_token');
   google.accounts.id.disableAutoSelect();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('lobby-screen').style.display = 'none';
@@ -1166,7 +1170,16 @@ async function loadLogs() {
 }
 
 loadGroups();
-loadStatus();
+// Auto-restore session on page load
+const savedToken = localStorage.getItem('psots_admin_token');
+if (savedToken) {
+  try {
+    handleGoogleLogin({ credential: savedToken });
+  } catch(e) {
+    localStorage.removeItem('psots_admin_email');
+    localStorage.removeItem('psots_admin_token');
+  }
+}
 </script>
 </body>
 </html>`;
