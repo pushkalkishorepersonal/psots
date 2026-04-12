@@ -269,7 +269,7 @@ document.getElementById('cardBody').innerHTML = `
 `;
 
 // Render steps
-Steps.render('#stepsContainer', TOTAL_STEPS, 1);
+// Steps.render disabled
 
 // Mount flat selector
 _flatSelector = new FlatSelector(

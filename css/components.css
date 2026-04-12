@@ -264,3 +264,4 @@
 @media (max-width: 400px) {
   .field-row, .field-row-3 { grid-template-columns: 1fr; }
 }
+.reg-panel { display: none; } .reg-panel.active { display: block; }
