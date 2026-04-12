@@ -3,11 +3,11 @@
 // Resident profile page — view, edit, consent, lifecycle
 // ============================================================
 
-import { session }           from '../../core/auth.js';
-import { logger }            from '../../core/logger.js';
-import { Toast }             from '../../components/shared/Toast.js';
-import { Modal }             from '../../components/shared/Modal.js';
-import { residentService }   from '../../services/resident.service.js';
+import session               from '../../core/auth.js';
+import logger                from '../../core/logger.js';
+import Toast                 from '../../components/shared/Toast.js';
+import Modal                 from '../../components/shared/Modal.js';
+import residentService       from '../../services/resident.service.js';
 
 const app = document.getElementById('app');
 
