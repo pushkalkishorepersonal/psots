@@ -32,15 +32,6 @@ let _confirmResult = null;
 
 const TOTAL_STEPS = 5;
 
-// ── AUTH LISTENER ─────────────────────────────────────────
-session.onChange(({ user, resident }) => {
-  if (!user) { _goStep(1); return; }
-  if (resident) { _showStatus(resident); return; }
-  _goStep(2);
-  const el = document.getElementById('userDisp');
-  if (el) el.textContent = user.displayName || user.email || user.phoneNumber || 'you';
-});
-
 // ── RENDER SHELL ──────────────────────────────────────────
 document.getElementById('cardBody').innerHTML = `
   <div class="steps"
@@ -601,7 +592,7 @@ function _goStep(n) {
   _step = n;
   document.querySelectorAll('.reg-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`panel${n}`)?.classList.add('active');
-  _steps?.setActive(n);
+  // step indicator updated by CSS
 }
 
 function _selectType(t) {
@@ -653,4 +644,13 @@ function _showRateBar(seconds) {
 // Nav scroll effect
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav')?.classList.toggle('scrolled', window.scrollY > 10);
+});
+
+// ── AUTH LISTENER ─────────────────────────────────────────
+session.onChange(({ user, resident }) => {
+  if (!user) { _goStep(1); return; }
+  if (resident) { _showStatus(resident); return; }
+  _goStep(2);
+  const el = document.getElementById('userDisp');
+  if (el) el.textContent = user.displayName || user.email || user.phoneNumber || 'you';
 });
