@@ -814,6 +814,23 @@ header h1{font-size:20px}
       <button class="tab-btn" onclick="switchTab('logs',this)">📝 Logs</button>
     </div>
 
+    <!-- SUPERADMIN PANEL — hidden by default, shown only for pushkalkishore@gmail.com -->
+    <div id="superadmin-panel" style="display:none; background:#f0f4ff; border:2px solid #667eea;
+      border-radius:12px; padding:20px; margin-bottom:16px;">
+      <h2 style="color:#667eea; margin-bottom:8px; font-size:16px;">🔐 Superadmin Controls</h2>
+      <p style="font-size:12px; color:#888; margin-bottom:16px;">
+        Global admins can see ALL groups. Group admins see only assigned groups.
+      </p>
+      <div style="margin-bottom:12px;">
+        <strong style="font-size:13px;">Global Admins (see all groups):</strong>
+        <div id="global-admins-list" style="margin-top:8px;"></div>
+      </div>
+      <div class="input-row" style="margin-top:12px;">
+        <input type="email" id="newGlobalAdmin" placeholder="Add global admin email...">
+        <button class="btn" onclick="addGlobalAdmin()">Add</button>
+      </div>
+    </div>
+
     <div id="status" class="tab active">
       <div class="status-grid">
         <div class="stat-card"><h3>Messages Scanned</h3><div class="num" id="scanned">-</div></div>
@@ -953,6 +970,11 @@ async function handleGoogleLogin(response) {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('user-email').textContent = email;
       document.getElementById('lobby-user-email').textContent = email;
+      currentUserEmail = email;
+      if (email === SUPERADMIN_EMAIL) {
+        document.getElementById('superadmin-panel').style.display = 'block';
+        loadGlobalAdmins();
+      }
       document.getElementById('lobby-screen').style.display = 'block';
 
       const grid = document.getElementById('group-grid');
@@ -1027,6 +1049,44 @@ function switchTab(t, btn) {
 let activeGroup = '';
 const SUPERADMIN_EMAIL = 'pushkalkishore@gmail.com';
 let currentUserEmail = '';
+
+async function loadGlobalAdmins() {
+  try {
+    const r = await fetch(API + '/admins');
+    const d = await r.json();
+    document.getElementById('global-admins-list').innerHTML =
+      (d.admins || []).map(e =>
+        \`<div class="item" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; margin-bottom:6px;">
+          <span style="font-size:13px;">\${e}</span>
+          \${e !== SUPERADMIN_EMAIL
+            ? \`<button class="btn btn-sm btn-red" onclick="removeGlobalAdmin('\${e}')">Remove</button>\`
+            : '<span style="font-size:11px; color:#888;">Superadmin (protected)</span>'}
+        </div>\`
+      ).join('') || '<p style="color:#999; font-size:13px;">No global admins yet.</p>';
+  } catch(e) {}
+}
+
+async function addGlobalAdmin() {
+  const email = document.getElementById('newGlobalAdmin').value.trim();
+  if (!email) return;
+  await fetch(API + '/admins', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, action: 'add' })
+  });
+  document.getElementById('newGlobalAdmin').value = '';
+  loadGlobalAdmins();
+}
+
+async function removeGlobalAdmin(email) {
+  if (!confirm('Remove ' + email + ' from global admins?')) return;
+  await fetch(API + '/admins', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, action: 'remove' })
+  });
+  loadGlobalAdmins();
+}
 
 async function loadStatus() {
   if (!activeGroup || activeGroup === 'initial') {
