@@ -24,7 +24,7 @@ const FlatSelector = {
         <label class="field-label">Tower</label>
         <select class="field-select" id="fs_tower">
           <option value="">Select Tower</option>
-          ${VALID_TOWERS.sort((a,b)=>a-b).map(t => `<option value="${t}">${t}</option>`).join('')}
+          ${VALID_TOWERS.sort((a, b) => a - b).map(t => `<option value="${t}">${t}</option>`).join('')}
         </select>
       </div>
       <div class="field-row-3">
@@ -56,7 +56,7 @@ const FlatSelector = {
 
     const towerSel = document.getElementById('fs_tower');
     const floorSel = document.getElementById('fs_floor');
-    const unitSel  = document.getElementById('fs_unit');
+    const unitSel = document.getElementById('fs_unit');
 
     towerSel.addEventListener('change', () => {
       const tower = parseInt(towerSel.value);
@@ -68,7 +68,7 @@ const FlatSelector = {
       });
       floorSel.disabled = false;
 
-      unitSel.innerHTML  = '<option value="">Unit</option>';
+      unitSel.innerHTML = '<option value="">Unit</option>';
       FlatService.getUnits(tower).forEach(u => {
         unitSel.innerHTML += `<option value="${u}">${u}</option>`;
       });
@@ -78,11 +78,11 @@ const FlatSelector = {
     });
 
     floorSel.addEventListener('change', refreshPreview);
-    unitSel.addEventListener('change',  refreshPreview);
+    unitSel.addEventListener('change', refreshPreview);
 
     async function refreshPreview() {
       const t = towerSel.value, f = floorSel.value, u = unitSel.value;
-      const preview  = document.getElementById('fs_preview');
+      const preview = document.getElementById('fs_preview');
       const memberEl = document.getElementById('fs_memberinfo');
 
       if (!t || !f || !u) {
@@ -98,7 +98,7 @@ const FlatSelector = {
         return;
       }
 
-      document.getElementById('fs_flatnum').textContent  = result.flatNumber;
+      document.getElementById('fs_flatnum').textContent = result.flatNumber;
       document.getElementById('fs_flatdesc').textContent = `Tower ${t} · Floor ${f} · Unit ${u}`;
       preview.classList.add('show');
 
@@ -132,4 +132,4 @@ const FlatSelector = {
   }
 };
 
-export default FlatSelector;
+export { FlatSelector };
