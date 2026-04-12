@@ -10,7 +10,7 @@ import {
     getUserViolations, saveUserViolations, getViolationsLast30Days, 
     isResidentVerified, markResidentVerified, checkViolation 
 } from './store.js';
-import { sendMessage, deleteTelegramMessage, parseListingWithGemini, fetchChatMember } from './telegram.js';
+import { sendMessage, deleteTelegramMessage, parseListingWithGemini, fetchChatMember, muteChatMember, kickChatMember, banChatMember } from './telegram.js';
 
 const ADMIN_ID = 989358143;
 const GOOGLE_CLIENT_ID_VALUE = "774636811164-c9n9n8a27c9d0fbhg7e6vie759gq1sun.apps.googleusercontent.com";
@@ -542,30 +542,38 @@ export default {
           await env.AUDIT_LOG.put(`${Date.now()}_${userId}`, JSON.stringify(auditLog), { expirationTtl: 7776000 });
 
           const count = userViolations.count;
+          const actionSettings = await getActionForViolationCount(count, env.VIOLATIONS, chatId);
           let msg = '';
 
           if (count === 1) {
-            msg = `Hi ${firstName}, your message was removed for: ${violation}. Please follow group guidelines. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations</a>`;
+            msg = `⚠️ Hi ${firstName}, your message was removed.\n\nReason: <b>${violation}</b>\n\nPlease follow group guidelines. This is violation 1.\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your record</a>`;
           } else if (count === 2) {
-            msg = `Hi ${firstName}, this is your 2nd warning for ${violation}. Please be careful. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations</a>`;
+            msg = `⚠️ Hi ${firstName}, 2nd violation for <b>${violation}</b>.\n\nNext violation will result in a mute. Please be careful.\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your record</a>`;
           } else if (count === 3) {
-            msg = `Hi ${firstName}, 3rd violation reached. Admin notified. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
-            await sendMessage(ADMIN_ID, `⚠️ ALERT: ${firstName} (@${username}) reached 3 violations. Latest: ${violation}`, botToken);
+            const muteDuration = actionSettings?.duration || 3600;
+            await muteChatMember(chatId, userId, botToken, muteDuration);
+            const muteHours = Math.round(muteDuration / 3600);
+            msg = `🔇 Hi ${firstName}, you have been <b>muted for ${muteHours} hour(s)</b> due to 3 violations.\n\nLatest: ${violation}\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your record & appeal</a>`;
+            await sendMessage(ADMIN_ID, `⚠️ MUTED: ${firstName} (@${username}) — 3 violations. Latest: ${violation}\nGroup: ${chatTitle}`, botToken);
           } else if (count === 5) {
-            msg = `Hi ${firstName}, you have reached 5 violations. This is a serious warning. Further violations may result in removal from the group. 🚫\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
-            await sendMessage(ADMIN_ID, `🚨 CRITICAL: ${firstName} (@${username}) reached 5 violations! Repeat offender. Consider action.`, botToken);
+            await kickChatMember(chatId, userId, botToken);
+            msg = `🚫 Hi ${firstName}, you have been <b>removed from the group</b> for 5 violations.\n\nYou may rejoin but further violations will result in a permanent ban.\n\nLatest: ${violation}\n\n<a href="https://telegram.psots.in/user?id=${userId}">Appeal here</a>`;
+            await sendMessage(ADMIN_ID, `🚨 KICKED: ${firstName} (@${username}) — 5 violations. Group: ${chatTitle}`, botToken);
           } else if (count >= 10) {
-            msg = `Hi ${firstName}, you have been removed from the group due to repeated violations. Please contact an admin to appeal. 🚫`;
-            await sendMessage(ADMIN_ID, `🔴 EXTREME: ${firstName} (@${username}) reached 10 violations. Auto-removal may be needed.`, botToken);
+            await banChatMember(chatId, userId, botToken);
+            msg = `🔴 Hi ${firstName}, you have been <b>permanently banned</b> from the group for 10+ violations.\n\nContact an admin to appeal.`;
+            await sendMessage(ADMIN_ID, `🔴 BANNED: ${firstName} (@${username}) — ${count} violations. Group: ${chatTitle}`, botToken);
           } else {
-            msg = `Hi ${firstName}, you have ${count} violations. Please review the guidelines. 🙏\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your violations & appeal</a>`;
+            msg = `⚠️ Hi ${firstName}, you have <b>${count} violations</b>.\n\nPlease review the group guidelines.\n\n<a href="https://telegram.psots.in/user?id=${userId}">View your record</a>`;
           }
 
           await sendMessage(userId, msg, botToken);
 
-          if (count === 3 || count === 5 || count === 10) {
+          if (count === 3 || count === 5 || count >= 10) {
             await env.VIOLATIONS.put(`_admin_alert_${Date.now()}`, JSON.stringify({
-              userId, username, firstName, count, violation, timestamp: new Date().toISOString()
+              userId, username, firstName, count, violation,
+              timestamp: new Date().toISOString(), chatId,
+              action: count === 3 ? 'muted' : count === 5 ? 'kicked' : 'banned'
             }), { expirationTtl: 86400 });
           }
         }
