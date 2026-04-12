@@ -1,7 +1,7 @@
 // PSOTS Telegram Moderation Bot - Cloudflare Workers
 // With Google OAuth, RBAC, User Panel, Appeals & Status Bar
 
-import { EVENTS_HTML, GRAND_LOBBY_HTML, MARKETPLACE_HTML, HANDBOOK_HTML, ADMIN_DASHBOARD, USER_PANEL, RESIDENT_PANEL } from './templates.js';
+import { EVENTS_HTML, GRAND_LOBBY_HTML, MARKETPLACE_HTML, HANDBOOK_HTML, ADMIN_DASHBOARD, USER_PANEL } from './templates.js';
 import { 
     INITIAL_ADMIN, DEFAULT_KEYWORDS, DEFAULT_ACTIONS,
     getBotToken, getAdmins, saveAdmins, getPINs, savePINs, 
@@ -15,11 +15,28 @@ import { sendMessage, deleteTelegramMessage, parseListingWithGemini, fetchChatMe
 const ADMIN_ID = 989358143;
 const GOOGLE_CLIENT_ID_VALUE = "774636811164-c9n9n8a27c9d0fbhg7e6vie759gq1sun.apps.googleusercontent.com";
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': 'https://psots.in',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
       const pathname = url.pathname;
+
+      // Handle CORS preflight from psots.in
+      if (request.method === 'OPTIONS' && pathname.startsWith('/api/')) {
+        return new Response(null, { status: 204, headers: CORS_HEADERS });
+      }
+
+      const jsonResponse = (body, status = 200) =>
+        new Response(typeof body === 'string' ? body : JSON.stringify(body), {
+          status,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
 
       if (pathname === '/' || pathname === '/index.html') {
           return new Response(GRAND_LOBBY_HTML(env.GOOGLE_CLIENT_ID), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
@@ -45,19 +62,13 @@ export default {
         return new Response(USER_PANEL, { headers: { 'Content-Type': 'text/html' } });
       }
 
-      if (pathname === '/resident' || pathname === '/resident/') {
-        return new Response(RESIDENT_PANEL(env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_VALUE), {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
-      }
-
       if (pathname.startsWith('/api/')) {
         const endpoint = pathname.replace('/api/', '');
         const group = url.searchParams.get('group');
 
         if (endpoint === 'my-groups') {
             const email = url.searchParams.get('email');
-            if (!email) return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
+            if (!email) return jsonResponse([]);
 
             const groupsJson = await env.VIOLATIONS.get('_groups');
             const allGroups = groupsJson ? JSON.parse(groupsJson) : {};
@@ -87,12 +98,12 @@ export default {
                 groups: allowed,
                 tokenSet: !!botToken
             };
-            return new Response(JSON.stringify(responseData), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse(responseData);
         }
 
         if (endpoint === 'groups') {
             const groupsJson = await env.VIOLATIONS.get('_groups');
-            return new Response(groupsJson || '{}', { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse(groupsJson || '{}');
         }
 
         if (endpoint === 'group-photo') {
@@ -115,18 +126,18 @@ export default {
         if (endpoint === 'webhook-status') {
           const botToken = await getBotToken(env.VIOLATIONS);
           if (!botToken) {
-            return new Response(JSON.stringify({ error: 'BOT_TOKEN not set' }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ error: 'BOT_TOKEN not set' });
           }
 
           try {
             const res = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
             const data = await res.json();
-            return new Response(JSON.stringify({
+            return jsonResponse({
               webhookConfigured: data.ok,
               webhookInfo: data.result
-            }), { headers: { 'Content-Type': 'application/json' } });
+            });
           } catch (err) {
-            return new Response(JSON.stringify({ error: err.message }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ error: err.message });
           }
         }
 
@@ -136,7 +147,7 @@ export default {
             keywordCategories: Object.keys(keywords),
             buySell: keywords.buySell,
             total: Object.values(keywords).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'debug-logs') {
@@ -148,7 +159,7 @@ export default {
           }
           return new Response(JSON.stringify({
             debugLogs: logs.sort((a, b) => b.key.localeCompare(a.key)).slice(0, 20)
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'diagnostics') {
@@ -184,7 +195,7 @@ export default {
               botTokenExists,
               botTokenPreview: botTokenValue ? botTokenValue.substring(0, 10) + '...' : 'null'
             }
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'status') {
@@ -198,12 +209,12 @@ export default {
             violations: violations.reduce((sum, v) => sum + v.count, 0),
             users: userList.keys.length,
             admins: admins.length
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'violations' && request.method === 'GET') {
           const violations = await getViolationsLast30Days(env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ violations: violations.sort((a, b) => b.count - a.count) }), { headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ violations: violations.sort((a, b) => b.count - a.count) });
         }
 
         if (endpoint === 'violations' && request.method === 'POST') {
@@ -220,7 +231,7 @@ export default {
               }
             }
           }
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint.startsWith('user-violations')) {
@@ -231,12 +242,12 @@ export default {
           return new Response(JSON.stringify({
             violations,
             admins: admins.map(a => ({ email: a, telegram_id: null }))
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'keywords' && request.method === 'GET') {
           const keywords = await getKeywords(env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ keywords }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ keywords });
         }
 
         if (endpoint === 'keywords' && request.method === 'POST') {
@@ -251,14 +262,14 @@ export default {
             keywords[body.category] = keywords[body.category].filter(kw => kw !== body.keyword);
           }
           await saveKeywords(keywords, env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'admins' && request.method === 'GET') {
           const admins = await getAdmins(env.VIOLATIONS, group);
           const adminTgIds = await env.VIOLATIONS.get('_admin_telegram_ids');
           const tgIds = adminTgIds ? JSON.parse(adminTgIds) : {};
-          return new Response(JSON.stringify({ admins, telegram_ids: tgIds }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ admins, telegram_ids: tgIds });
         }
 
         if (endpoint === 'admins' && request.method === 'POST') {
@@ -281,12 +292,12 @@ export default {
             await env.VIOLATIONS.put('_admin_telegram_ids', JSON.stringify(tgIds));
           }
 
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'pins' && request.method === 'GET') {
           const pins = await getPINs(env.VIOLATIONS);
-          return new Response(JSON.stringify({ pins }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ pins });
         }
 
         if (endpoint === 'pins' && request.method === 'POST') {
@@ -298,14 +309,14 @@ export default {
             pins.splice(pins.indexOf(body.pin), 1);
           }
           await savePINs(pins, env.VIOLATIONS);
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'verify-pin' && request.method === 'POST') {
           const body = await request.json();
           const pins = await getPINs(env.VIOLATIONS);
           const valid = pins.includes(body.pin);
-          return new Response(JSON.stringify({ valid }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ valid });
         }
 
         if (endpoint === 'verify-resident' && request.method === 'POST') {
@@ -313,7 +324,7 @@ export default {
             if (body.action === 'approve') {
                 await markResidentVerified(body.userId, { ...body.details, verifiedAt: new Date().toISOString() }, env.VIOLATIONS);
             }
-            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'residents' && request.method === 'GET') {
@@ -334,7 +345,7 @@ export default {
                 }
             }
             
-            return new Response(JSON.stringify({ residents }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ residents });
         }
 
         if (endpoint === 'telegram-auth' && request.method === 'POST') {
@@ -342,7 +353,7 @@ export default {
           const authDate = parseInt(body.auth_date || 0);
           const now = Math.floor(Date.now() / 1000);
           if (now - authDate > 3600) {
-            return new Response(JSON.stringify({ error: 'Auth expired' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse($1, $2);
           }
           const userId = String(body.id);
           const username = body.username || body.first_name || 'User';
@@ -351,7 +362,7 @@ export default {
             ok: true, userId, username,
             registered: !!verified,
             data: verified ? JSON.parse(verified) : null
-          }), { headers: { 'Content-Type': 'application/json' } });
+          });
         }
 
         if (endpoint === 'register' && request.method === 'POST') {
@@ -370,7 +381,7 @@ export default {
             flatMembers.push(body.userId);
             await env.VIOLATIONS.put(flatId, JSON.stringify(flatMembers));
             
-            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ ok: true });
         }
 
         if (endpoint.startsWith('marketplace') && request.method === 'GET') {
@@ -380,7 +391,7 @@ export default {
                 const data = JSON.parse(await env.VIOLATIONS.get(item.name));
                 listings.push({ ...data, listingId: item.name });
             }
-            return new Response(JSON.stringify({ listings: listings.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) }), { headers: { 'Content-Type': 'application/json' } });
+            return new Response(JSON.stringify({ listings: listings.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) });
         }
 
         if (endpoint === 'marketplace' && request.method === 'POST') {
@@ -395,18 +406,18 @@ export default {
                 const token = authHeader.replace('Bearer ', '');
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-                  return new Response(JSON.stringify({ error: 'Session expired. Please log in again.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                  return jsonResponse($1, $2);
                 }
                 verifiedUserId = payload.sub;
               } catch(e) {
-                return new Response(JSON.stringify({ error: 'Invalid auth token.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                return jsonResponse($1, $2);
               }
             } else {
               verifiedUserId = body.userId;
             }
 
             const verified = await isResidentVerified(verifiedUserId, env.VIOLATIONS);
-            if (!verified) return new Response(JSON.stringify({ error: 'Identity verification required to post.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+            if (!verified) return jsonResponse($1, $2);
 
             const keywords = await getKeywords(env.VIOLATIONS, group);
             const violation = checkViolation(body.description + ' ' + body.item, keywords);
@@ -421,24 +432,24 @@ export default {
             };
             const listingId = `market_listing_${Date.now()}_${body.userId}`;
             await env.VIOLATIONS.put(listingId, JSON.stringify(listing), { expirationTtl: 2592000 });
-            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ ok: true });
         }
 
         if (endpoint.startsWith('marketplace') && request.method === 'DELETE') {
             const id = url.searchParams.get('id');
             if (id) await env.VIOLATIONS.delete(id);
-            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'settings' && request.method === 'GET') {
           const settings = await getActionSettings(env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ settings }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ settings });
         }
 
         if (endpoint === 'settings' && request.method === 'POST') {
           const settings = await request.json();
           await saveActionSettings(settings, env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'events' && request.method === 'GET') {
@@ -449,14 +460,14 @@ export default {
             events.push({ ...data, eventId: item.name });
           }
           events.sort((a, b) => new Date(a.date) - new Date(b.date));
-          return new Response(JSON.stringify({ events }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ events });
         }
 
         if (endpoint === 'events' && request.method === 'POST') {
           const body = await request.json();
           if (body.action === 'delete' && body.eventId) {
             await env.VIOLATIONS.delete(body.eventId);
-            return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+            return jsonResponse({ ok: true });
           }
           const event = {
             title: body.title,
@@ -466,7 +477,7 @@ export default {
             createdAt: new Date().toISOString()
           };
           await env.VIOLATIONS.put(`event_${Date.now()}`, JSON.stringify(event));
-          return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+          return jsonResponse({ ok: true });
         }
 
         if (endpoint === 'logs') {
@@ -481,7 +492,7 @@ export default {
             }
           }
 
-          return new Response(JSON.stringify({ logs: logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) }), { headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ logs: logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) });
         }
       }
 
