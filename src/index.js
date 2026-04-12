@@ -53,7 +53,7 @@ export default {
             const email = url.searchParams.get('email');
             if (!email) return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
 
-            const groupsJson = await env.VIOLATIONS.get('_groups');
+        const groupsJson = await env.VIOLATIONS.get('_groups');
             const allGroups = groupsJson ? JSON.parse(groupsJson) : {};
             const allowed = {};
 
@@ -85,7 +85,7 @@ export default {
         }
 
         if (endpoint === 'groups') {
-            const groupsJson = await env.VIOLATIONS.get('_groups');
+        const groupsJson = await env.VIOLATIONS.get('_groups');
             return new Response(groupsJson || '{}', { headers: { 'Content-Type': 'application/json' } });
         }
 
@@ -436,7 +436,7 @@ export default {
 
         const message = update.message;
         const chatId = message.chat.id;
-        const chatTitle = message.chat.title || 'Private Chat';
+        let chatTitle = message.chat.title || 'Private Chat';
         const userId = message.from.id;
         const text = message.text || '';
         const username = message.from.username || message.from.first_name || 'User';
@@ -449,12 +449,14 @@ export default {
         let groups = groupsJson ? JSON.parse(groupsJson) : {};
         const chatKey = String(chatId);
 
-        if (!groups[chatKey]) {
-            let photoUrl = null;
-            try {
-                const chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat?chat_id=${chatId}`);
-                const chatData = await chatRes.json();
-                if (chatData.ok && chatData.result.photo) {
+        // Always fetch fresh title and photo from Telegram
+        let photoUrl = groups[chatKey] ? groups[chatKey].photo : null;
+        try {
+            const chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat?chat_id=${chatId}`);
+            const chatData = await chatRes.json();
+            if (chatData.ok) {
+                chatTitle = chatData.result.title || chatTitle;
+                if (chatData.result.photo) {
                     const fileId = chatData.result.photo.small_file_id;
                     const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
                     const fileData = await fileRes.json();
@@ -462,17 +464,16 @@ export default {
                         photoUrl = `/api/group-photo?path=${encodeURIComponent(fileData.result.file_path)}`;
                     }
                 }
-            } catch (e) {
-                console.error("Group Meta Fetch Error:", e);
             }
-
-            groups[chatKey] = { 
-                title: chatTitle, 
-                firstSeen: new Date().toISOString(),
-                photo: photoUrl
-            };
-            await env.VIOLATIONS.put('_groups', JSON.stringify(groups));
+        } catch (e) {
+            console.error("Group Meta Fetch Error:", e);
         }
+        groups[chatKey] = {
+            title: chatTitle,
+            firstSeen: groups[chatKey] ? groups[chatKey].firstSeen : new Date().toISOString(),
+            photo: photoUrl
+        };
+        await env.VIOLATIONS.put('_groups', JSON.stringify(groups));
 
         await env.VIOLATIONS.put(`_log_webhook_${Date.now()}`, JSON.stringify({
           chatId, userId, text, timestamp: new Date().toISOString()
