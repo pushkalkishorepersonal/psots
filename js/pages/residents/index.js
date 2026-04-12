@@ -4,15 +4,15 @@
 // Login → Type → Details → Privacy → Status
 // ============================================================
 
-import session           from '../../core/auth.js';
-import logger            from '../../core/logger.js';
-import { Toast }         from '../../components/shared/Toast.js';
-import { Steps }         from '../../components/shared/Steps.js';
-import { FlatSelector }  from '../../components/resident/FlatSelector.js';
-import residentService   from '../../services/resident.service.js';
-import rateLimitService  from '../../services/rateLimit.service.js';
-import flatService       from '../../services/flat.service.js';
-import { auth }              from '../../core/firebase.js';
+import session from '../../core/auth.js';
+import logger from '../../core/logger.js';
+import { Toast } from '../../components/shared/Toast.js';
+import { Steps } from '../../components/shared/Steps.js';
+import { FlatSelector } from '../../components/resident/FlatSelector.js';
+import residentService from '../../services/resident.service.js';
+import rateLimitService from '../../services/rateLimit.service.js';
+import flatService from '../../services/flat.service.js';
+import { auth } from '../../core/firebase.js';
 import {
   GoogleAuthProvider, signInWithPopup,
   RecaptchaVerifier, signInWithPhoneNumber
@@ -22,19 +22,19 @@ import {
 } from '../../config/constants.js';
 
 // ── STATE ─────────────────────────────────────────────────
-let _step          = 1;
-let _selType       = null;   // 'owner' | 'tenant'
-let _selOwnerSt    = null;   // 'resident' | 'non_resident' | 'nri'
-let _flatData      = {};
-let _flatSelector  = null;
+let _step = 1;
+let _selType = null;   // 'owner' | 'tenant'
+let _selOwnerSt = null;   // 'resident' | 'non_resident' | 'nri'
+let _flatData = {};
+let _flatSelector = null;
 let _confirmResult = null;
 
-const TOTAL_STEPS  = 5;
+const TOTAL_STEPS = 5;
 
 // ── AUTH LISTENER ─────────────────────────────────────────
 session.onChange(({ user, resident }) => {
-  if (!user)     { _goStep(1); return; }
-  if (resident)  { _showStatus(resident); return; }
+  if (!user) { _goStep(1); return; }
+  if (resident) { _showStatus(resident); return; }
   _goStep(2);
   const el = document.getElementById('userDisp');
   if (el) el.textContent = user.displayName || user.email || user.phoneNumber || 'you';
@@ -272,10 +272,9 @@ document.getElementById('cardBody').innerHTML = `
 // Steps.render disabled
 
 // Mount flat selector
-_flatSelector = new FlatSelector(
-  document.getElementById('flatSelectorMount'),
-  () => {}
-);
+FlatSelector.init('flatSelectorMount', {
+  onChange: () => { }
+});
 
 // ── EVENT BINDINGS ────────────────────────────────────────
 
@@ -311,11 +310,11 @@ document.getElementById('btnReqTgOTP').onclick = async () => {
 
 // Telegram OTP verify
 document.getElementById('btnVerifyTg').onclick = async () => {
-  const u   = document.getElementById('tgUser').value.trim().replace('@', '');
+  const u = document.getElementById('tgUser').value.trim().replace('@', '');
   const otp = document.getElementById('tgOTP').value.trim();
   if (!u || !otp) { _setAlert('loginAlert', 'error', 'Enter username and OTP'); return; }
   try {
-    const res  = await fetch(`${WORKER_URL}/verify-otp?username=${u}&otp=${otp}`);
+    const res = await fetch(`${WORKER_URL}/verify-otp?username=${u}&otp=${otp}`);
     const data = await res.json();
     if (data.token) {
       const { signInWithCustomToken } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
@@ -330,7 +329,7 @@ document.getElementById('btnVerifyTg').onclick = async () => {
 
 // Phone OTP send
 document.getElementById('btnSendOTP').onclick = async () => {
-  const ph  = document.getElementById('phoneInp').value.trim();
+  const ph = document.getElementById('phoneInp').value.trim();
   const fmt = ph.startsWith('+') ? ph.replace(/\s/g, '') : `+91${ph.replace(/\s/g, '')}`;
   if (fmt.length < 12) { _setAlert('loginAlert', 'error', 'Enter a valid number with country code'); return; }
   _btnLoading('btnSendOTP', true, 'Sending...');
@@ -365,7 +364,7 @@ document.getElementById('btnChangeNum').onclick = () => {
 };
 
 // Type selection
-document.getElementById('tc_owner').onclick  = () => _selectType('owner');
+document.getElementById('tc_owner').onclick = () => _selectType('owner');
 document.getElementById('tc_tenant').onclick = () => _selectType('tenant');
 ['resident', 'non_resident', 'nri'].forEach(s => {
   document.getElementById(`os_${s}`).onclick = () => _selectOwnerStatus(s);
@@ -379,17 +378,17 @@ document.getElementById('btnTypeNext').onclick = () => {
   _goStep(3);
 };
 
-document.getElementById('btnBackToType').onclick    = () => _goStep(2);
+document.getElementById('btnBackToType').onclick = () => _goStep(2);
 document.getElementById('btnBackToDetails').onclick = () => _goStep(3);
 
 // Go to consent step
 document.getElementById('btnGoConsent').onclick = async () => {
-  const name  = document.getElementById('resName').value.trim();
-  const vals  = _flatSelector.getValues();
+  const name = document.getElementById('resName').value.trim();
+  const vals = _flatSelector.getValues();
   const phone = document.getElementById('contPhone').value.trim();
 
-  if (!name)  { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
-  if (!vals)  { _setAlert('detailsAlert', 'error', 'Select your tower, floor and unit'); return; }
+  if (!name) { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
+  if (!vals) { _setAlert('detailsAlert', 'error', 'Select your tower, floor and unit'); return; }
   if (!phone) { _setAlert('detailsAlert', 'error', 'Enter your contact phone'); return; }
 
   const { valid, errors } = flatService.validate(vals.tower, vals.floor, vals.unit);
@@ -403,24 +402,24 @@ document.getElementById('btnGoConsent').onclick = async () => {
 
   if (_selOwnerSt === 'nri') {
     if (!document.getElementById('poaName').value.trim() ||
-        !document.getElementById('poaPhone').value.trim()) {
+      !document.getElementById('poaPhone').value.trim()) {
       _setAlert('detailsAlert', 'error', 'Enter POA details for NRI registration'); return;
     }
   }
 
   _flatData = {
     ...vals, name, phone,
-    moveIn:     document.getElementById('moveInDate').value,
-    leaseStart: document.getElementById('leaseStart')?.value  || null,
-    leaseEnd:   document.getElementById('leaseEnd')?.value    || null,
-    ownerName:  document.getElementById('ownerName')?.value?.trim()  || null,
+    moveIn: document.getElementById('moveInDate').value,
+    leaseStart: document.getElementById('leaseStart')?.value || null,
+    leaseEnd: document.getElementById('leaseEnd')?.value || null,
+    ownerName: document.getElementById('ownerName')?.value?.trim() || null,
     ownerPhone: document.getElementById('ownerPhone')?.value?.trim() || null,
-    poaName:    document.getElementById('poaName')?.value?.trim()    || null,
-    poaPhone:   document.getElementById('poaPhone')?.value?.trim()   || null,
-    emName:     document.getElementById('emName').value.trim(),
-    emPhone:    document.getElementById('emPhone').value.trim(),
+    poaName: document.getElementById('poaName')?.value?.trim() || null,
+    poaPhone: document.getElementById('poaPhone')?.value?.trim() || null,
+    emName: document.getElementById('emName').value.trim(),
+    emPhone: document.getElementById('emPhone').value.trim(),
     emRelation: document.getElementById('emRelation').value.trim(),
-    isPG:       document.getElementById('isPG').checked,
+    isPG: document.getElementById('isPG').checked,
   };
 
   _goStep(4);
@@ -450,22 +449,22 @@ document.getElementById('btnSubmit').onclick = async () => {
     return;
   }
 
-  const isSecondary  = capacity.count > 0;
+  const isSecondary = capacity.count > 0;
   const isTenantFlow = _selType === 'tenant' && capacity.hasApprovedOwner;
-  const role         = isSecondary ? 'secondary' : 'primary';
-  const status       = isTenantFlow ? 'pending_owner'
-                     : isSecondary  ? 'pending_primary'
-                     : 'pending';
+  const role = isSecondary ? 'secondary' : 'primary';
+  const status = isTenantFlow ? 'pending_owner'
+    : isSecondary ? 'pending_primary'
+      : 'pending';
 
   const consent = {
-    phone:        document.getElementById('cPhone').checked,
-    email:        document.getElementById('cEmail').checked,
-    tgListing:    document.getElementById('cTgListing').checked,
+    phone: document.getElementById('cPhone').checked,
+    email: document.getElementById('cEmail').checked,
+    tgListing: document.getElementById('cTgListing').checked,
     phoneListing: document.getElementById('cPhoneListing').checked,
     phoneConsent: document.getElementById('cPhoneConsent').checked,
-    tgNotif:      document.getElementById('cTgNotif').checked,
-    emailNotif:   document.getElementById('cEmailNotif').checked,
-    recordedAt:   new Date().toISOString(),
+    tgNotif: document.getElementById('cTgNotif').checked,
+    emailNotif: document.getElementById('cEmailNotif').checked,
+    recordedAt: new Date().toISOString(),
   };
 
   const escalationDate = new Date(Date.now() + ESCALATION_DAYS * 86400000).toISOString();
@@ -477,20 +476,20 @@ document.getElementById('btnSubmit').onclick = async () => {
     unit: _flatData.unit, flatNumber: _flatData.flatNumber,
     residentType: _selType, ownerStatus: _selOwnerSt || null,
     role, status, isActive: false, movedOut: false,
-    isPG:    _flatData.isPG  || false,
-    isNRI:   _selOwnerSt === 'nri',
+    isPG: _flatData.isPG || false,
+    isNRI: _selOwnerSt === 'nri',
     poaName: _flatData.poaName, poaPhone: _flatData.poaPhone,
     leaseStartDate: _flatData.leaseStart, leaseEndDate: _flatData.leaseEnd,
     ownerNameField: _flatData.ownerName,
-    moveInDate:     _flatData.moveIn,
-    emergencyContactName:     _flatData.emName,
-    emergencyContactPhone:    _flatData.emPhone,
+    moveInDate: _flatData.moveIn,
+    emergencyContactName: _flatData.emName,
+    emergencyContactPhone: _flatData.emPhone,
     emergencyContactRelation: _flatData.emRelation,
-    aboutMe:   document.getElementById('aboutMe').value.trim()  || null,
-    linkedIn:  document.getElementById('linkedin').value.trim() || null,
-    website:   document.getElementById('website').value.trim()  || null,
-    instagram: document.getElementById('instagram').value.trim()|| null,
-    twitter:   document.getElementById('twitter').value.trim()  || null,
+    aboutMe: document.getElementById('aboutMe').value.trim() || null,
+    linkedIn: document.getElementById('linkedin').value.trim() || null,
+    website: document.getElementById('website').value.trim() || null,
+    instagram: document.getElementById('instagram').value.trim() || null,
+    twitter: document.getElementById('twitter').value.trim() || null,
     consent,
     badges: { blueTick: false, goldStar: false, isAdmin: false, nudgePending: false },
     rejectionCount: 0,
@@ -515,13 +514,13 @@ function _showStatus(d) {
   const tick = d.badges?.blueTick ? '<span class="blue-tick">✓</span>' : '';
 
   const statusMap = {
-    pending:         '<span class="badge badge-pending">⏳ Pending Admin Review</span>',
+    pending: '<span class="badge badge-pending">⏳ Pending Admin Review</span>',
     pending_primary: '<span class="badge badge-pending">⏳ Pending Primary Resident</span>',
-    pending_owner:   '<span class="badge badge-blue">🔄 Pending Owner Approval</span>',
-    approved:        '<span class="badge badge-approved">✅ Verified Resident</span>',
-    rejected:        '<span class="badge badge-rejected">❌ Not Approved</span>',
-    suspended:       '<span class="badge badge-inactive">⚫ Suspended</span>',
-    inactive:        '<span class="badge badge-inactive">⚫ Inactive</span>',
+    pending_owner: '<span class="badge badge-blue">🔄 Pending Owner Approval</span>',
+    approved: '<span class="badge badge-approved">✅ Verified Resident</span>',
+    rejected: '<span class="badge badge-rejected">❌ Not Approved</span>',
+    suspended: '<span class="badge badge-inactive">⚫ Suspended</span>',
+    inactive: '<span class="badge badge-inactive">⚫ Inactive</span>',
   };
 
   document.getElementById('statusCard').innerHTML = `
@@ -603,7 +602,7 @@ function _goStep(n) {
   _step = n;
   document.querySelectorAll('.reg-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`panel${n}`)?.classList.add('active');
-  Steps.update(TOTAL_STEPS, n);
+  // Steps.update removed - Steps uses setActive pattern
 }
 
 function _selectType(t) {
