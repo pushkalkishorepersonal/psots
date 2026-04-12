@@ -1,7 +1,7 @@
 // PSOTS Telegram Moderation Bot - Cloudflare Workers
 // With Google OAuth, RBAC, User Panel, Appeals & Status Bar
 
-import { EVENTS_HTML, GRAND_LOBBY_HTML, MARKETPLACE_HTML, HANDBOOK_HTML, ADMIN_DASHBOARD, USER_PANEL } from './templates.js';
+import { EVENTS_HTML, GRAND_LOBBY_HTML, MARKETPLACE_HTML, HANDBOOK_HTML, ADMIN_DASHBOARD, USER_PANEL, RESIDENT_PANEL } from './templates.js';
 import { 
     INITIAL_ADMIN, DEFAULT_KEYWORDS, DEFAULT_ACTIONS,
     getBotToken, getAdmins, saveAdmins, getPINs, savePINs, 
@@ -43,6 +43,12 @@ export default {
 
       if (pathname === '/user' || pathname === '/user/') {
         return new Response(USER_PANEL, { headers: { 'Content-Type': 'text/html' } });
+      }
+
+      if (pathname === '/resident' || pathname === '/resident/') {
+        return new Response(RESIDENT_PANEL(env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_VALUE), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
       }
 
       if (pathname.startsWith('/api/')) {
@@ -321,6 +327,23 @@ export default {
             }
             
             return new Response(JSON.stringify({ residents }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
+        if (endpoint === 'telegram-auth' && request.method === 'POST') {
+          const body = await request.json();
+          const authDate = parseInt(body.auth_date || 0);
+          const now = Math.floor(Date.now() / 1000);
+          if (now - authDate > 3600) {
+            return new Response(JSON.stringify({ error: 'Auth expired' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          }
+          const userId = String(body.id);
+          const username = body.username || body.first_name || 'User';
+          const verified = await env.VIOLATIONS.get(`resident_verified_${userId}`);
+          return new Response(JSON.stringify({
+            ok: true, userId, username,
+            registered: !!verified,
+            data: verified ? JSON.parse(verified) : null
+          }), { headers: { 'Content-Type': 'application/json' } });
         }
 
         if (endpoint === 'register' && request.method === 'POST') {
