@@ -143,7 +143,7 @@ export default {
 
         if (endpoint === 'check-keywords') {
           const keywords = await getKeywords(env.VIOLATIONS);
-          return new Response(JSON.stringify({
+          return jsonResponse({
             keywordCategories: Object.keys(keywords),
             buySell: keywords.buySell,
             total: Object.values(keywords).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
@@ -157,7 +157,7 @@ export default {
             const data = await env.VIOLATIONS.get(item.name);
             logs.push({ key: item.name, value: JSON.parse(data) });
           }
-          return new Response(JSON.stringify({
+          return jsonResponse({
             debugLogs: logs.sort((a, b) => b.key.localeCompare(a.key)).slice(0, 20)
           });
         }
@@ -184,7 +184,7 @@ export default {
             }
           }
 
-          return new Response(JSON.stringify({
+          return jsonResponse({
             hasToken,
             tokenPreview,
             botInfo,
@@ -204,7 +204,7 @@ export default {
           const admins = await getAdmins(env.VIOLATIONS, group);
           const userList = await env.VIOLATIONS.list({ prefix: 'user_' });
 
-          return new Response(JSON.stringify({
+          return jsonResponse({
             totalScanned: stats.totalScanned,
             violations: violations.reduce((sum, v) => sum + v.count, 0),
             users: userList.keys.length,
@@ -214,7 +214,7 @@ export default {
 
         if (endpoint === 'violations' && request.method === 'GET') {
           const violations = await getViolationsLast30Days(env.VIOLATIONS, group);
-          return new Response(JSON.stringify({ violations: violations.sort((a, b) => b.count - a.count) });
+          return jsonResponse({ violations: violations.sort((a, b) => b.count - a.count) });
         }
 
         if (endpoint === 'violations' && request.method === 'POST') {
@@ -239,7 +239,7 @@ export default {
           const violations = await getUserViolations(userId, env.VIOLATIONS, group);
           const admins = await getAdmins(env.VIOLATIONS, group);
 
-          return new Response(JSON.stringify({
+          return jsonResponse({
             violations,
             admins: admins.map(a => ({ email: a, telegram_id: null }))
           });
@@ -353,12 +353,12 @@ export default {
           const authDate = parseInt(body.auth_date || 0);
           const now = Math.floor(Date.now() / 1000);
           if (now - authDate > 3600) {
-            return jsonResponse($1, $2);
+            return jsonResponse({ error: 'Auth expired' }, 401);
           }
           const userId = String(body.id);
           const username = body.username || body.first_name || 'User';
           const verified = await env.VIOLATIONS.get(`resident_verified_${userId}`);
-          return new Response(JSON.stringify({
+          return jsonResponse({
             ok: true, userId, username,
             registered: !!verified,
             data: verified ? JSON.parse(verified) : null
@@ -372,7 +372,7 @@ export default {
             const flatData = await env.VIOLATIONS.get(flatId);
             const flatMembers = flatData ? JSON.parse(flatData) : [];
             if (flatMembers.length >= 4) {
-                return new Response(JSON.stringify({ error: 'Max 4 accounts reached for this flat.' }), { status: 403 });
+                return jsonResponse({ error: 'Max 4 accounts reached for this flat.' }, 403);
             }
             
             const residentData = { ...body, registeredAt: new Date().toISOString(), status: 'pending' };
@@ -391,7 +391,7 @@ export default {
                 const data = JSON.parse(await env.VIOLATIONS.get(item.name));
                 listings.push({ ...data, listingId: item.name });
             }
-            return new Response(JSON.stringify({ listings: listings.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) });
+            return jsonResponse({ listings: listings.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) });
         }
 
         if (endpoint === 'marketplace' && request.method === 'POST') {
@@ -406,11 +406,11 @@ export default {
                 const token = authHeader.replace('Bearer ', '');
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-                  return jsonResponse($1, $2);
+                  return jsonResponse({ error: 'Session expired. Please log in again.' }, 401);
                 }
                 verifiedUserId = payload.sub;
               } catch(e) {
-                return jsonResponse($1, $2);
+                return jsonResponse({ error: 'Invalid auth token.' }, 401);
               }
             } else {
               verifiedUserId = body.userId;
@@ -422,7 +422,7 @@ export default {
             const keywords = await getKeywords(env.VIOLATIONS, group);
             const violation = checkViolation(body.description + ' ' + body.item, keywords);
             if (violation && violation !== 'Buy/Sell Content') {
-                return new Response(JSON.stringify({ error: 'Post violates community guidelines: ' + violation }), { status: 400 });
+                return jsonResponse({ error: 'Post violates community guidelines: ' + violation }, 400);
             }
 
             const listing = { 
@@ -492,7 +492,7 @@ export default {
             }
           }
 
-          return new Response(JSON.stringify({ logs: logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) });
+          return jsonResponse({ logs: logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) });
         }
       }
 
