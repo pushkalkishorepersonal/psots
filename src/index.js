@@ -89,6 +89,36 @@ export default {
             return new Response(groupsJson || '{}', { headers: { 'Content-Type': 'application/json' } });
         }
 
+        if (endpoint === 'refresh-groups') {
+            const botToken = await getBotToken(env.VIOLATIONS);
+            if (!botToken) return new Response(JSON.stringify({ error: 'No token' }), { status: 500 });
+            const groupsJson = await env.VIOLATIONS.get('_groups');
+            const groups = groupsJson ? JSON.parse(groupsJson) : {};
+            const results = {};
+            for (const chatId of Object.keys(groups)) {
+                try {
+                    const res = await fetch(`https://api.telegram.org/bot${botToken}/getChat?chat_id=${chatId}`);
+                    const data = await res.json();
+                    if (data.ok) {
+                        let photoUrl = groups[chatId].photo || null;
+                        if (data.result.photo) {
+                            const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${data.result.photo.small_file_id}`);
+                            const fileData = await fileRes.json();
+                            if (fileData.ok) photoUrl = `/api/group-photo?path=${encodeURIComponent(fileData.result.file_path)}`;
+                        }
+                        groups[chatId] = {
+                            title: data.result.title,
+                            firstSeen: groups[chatId].firstSeen || new Date().toISOString(),
+                            photo: photoUrl
+                        };
+                        results[chatId] = data.result.title;
+                    }
+                } catch(e) {}
+            }
+            await env.VIOLATIONS.put('_groups', JSON.stringify(groups));
+            return new Response(JSON.stringify({ ok: true, updated: results }), { headers: { 'Content-Type': 'application/json' } });
+        }
+
         if (endpoint === 'group-photo') {
             const botToken = await getBotToken(env.VIOLATIONS);
             const path = url.searchParams.get('path');
@@ -427,6 +457,29 @@ export default {
                     body: JSON.stringify({ callback_query_id: cb.id, text: "✅ Resident Approved!" })
                 });
                 await sendMessage(cb.message.chat.id, `✅ Resident verified by admin: ${cb.from.first_name}`, botToken);
+            }
+            return new Response('OK');
+        }
+
+        // Auto-register group when bot is added
+        if (update.my_chat_member) {
+            const chat = update.my_chat_member.chat;
+            const newStatus = update.my_chat_member.new_chat_member?.status;
+            if (chat.type !== 'private' && (newStatus === 'member' || newStatus === 'administrator')) {
+                const botToken = await getBotToken(env.VIOLATIONS);
+                const groupsJson = await env.VIOLATIONS.get('_groups');
+                const groups = groupsJson ? JSON.parse(groupsJson) : {};
+                const chatKey = String(chat.id);
+                if (!groups[chatKey]) {
+                    let photoUrl = null;
+                    try {
+                        const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${chat.photo?.small_file_id}`);
+                        const fileData = await fileRes.json();
+                        if (fileData.ok) photoUrl = `/api/group-photo?path=${encodeURIComponent(fileData.result.file_path)}`;
+                    } catch(e) {}
+                    groups[chatKey] = { title: chat.title, firstSeen: new Date().toISOString(), photo: photoUrl };
+                    await env.VIOLATIONS.put('_groups', JSON.stringify(groups));
+                }
             }
             return new Response('OK');
         }
