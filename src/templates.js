@@ -1025,10 +1025,17 @@ function switchTab(t, btn) {
 }
 
 let activeGroup = '';
-
-
+const SUPERADMIN_EMAIL = 'pushkalkishore@gmail.com';
+let currentUserEmail = '';
 
 async function loadStatus() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('scanned').textContent = '—';
+    document.getElementById('vcount').textContent = '—';
+    document.getElementById('ucount').textContent = '—';
+    document.getElementById('acount').textContent = '—';
+    return;
+  }
   try {
     const r = await fetch(API + '/status?group=' + activeGroup);
     const d = await r.json();
@@ -1040,6 +1047,10 @@ async function loadStatus() {
 }
 
 async function loadViolations() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('violationsList').innerHTML = '<p style="color:#999">Select a group first.</p>';
+    return;
+  }
   try {
     const r = await fetch(API + '/violations?group=' + activeGroup);
     const d = await r.json();
@@ -1051,6 +1062,10 @@ async function loadViolations() {
 }
 
 async function loadAdmins() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('adminsList').innerHTML = '<p style="color:#999">Select a group first.</p>';
+    return;
+  }
   try {
     const r = await fetch(API + '/admins?group=' + activeGroup);
     const d = await r.json();
@@ -1061,6 +1076,10 @@ async function loadAdmins() {
 }
 
 async function loadKeywordsForCategory() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('keywordsList').innerHTML = '<p style="color:#999">Select a group first.</p>';
+    return;
+  }
   try {
     const cat = document.getElementById('categorySelect').value;
     const r = await fetch(API + '/keywords?group=' + activeGroup);
@@ -1106,6 +1125,10 @@ async function resetUser(username) {
 }
 
 async function loadSettings() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('settings-msg').textContent = 'Select a group first.';
+    return;
+  }
   try {
     const r = await fetch(API + '/settings?group=' + activeGroup);
     const d = await r.json();
@@ -1134,6 +1157,10 @@ async function saveSettings() {
 }
 
 async function loadResidents() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('residentsList').innerHTML = '<p style="color:#999">Select a group first.</p>';
+    return;
+  }
   try {
     const r = await fetch(API + '/residents?group=' + activeGroup);
     const d = await r.json();
@@ -1155,6 +1182,10 @@ async function approveResident(userId) {
 }
 
 async function loadLogs() {
+  if (!activeGroup || activeGroup === 'initial') {
+    document.getElementById('logsList').innerHTML = '<p style="color:#999">Select a group first.</p>';
+    return;
+  }
   try {
     const r = await fetch(API + '/logs?group=' + activeGroup);
     const d = await r.json();
