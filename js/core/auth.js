@@ -8,21 +8,21 @@
  * - Expose reactive onUserChange hook
  */
 
-import { auth }                              from './firebase.js';
-import { onAuthStateChanged, signOut }       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import cache                                 from './cache.js';
-import { SUPER_ADMIN }                       from '../config/constants.js';
+import { auth } from './firebase.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import cache from './cache.js';
+import { SUPER_ADMIN } from '../config/constants.js';
 
 // Current user — kept in memory for fast synchronous access
-let _currentUser  = null;
+let _currentUser = null;
 let _authResolved = false;
-const _listeners  = new Set();
+const _listeners = new Set();
 
 // Boot — subscribe to Firebase auth state once
 onAuthStateChanged(auth, user => {
-  _currentUser  = user;
+  _currentUser = user;
   _authResolved = true;
-  _listeners.forEach(fn => fn(user));
+  _listeners.forEach(fn => fn({ user: user, resident: null, role: user ? 'registered' : 'guest' }));
 });
 
 const Auth = {
