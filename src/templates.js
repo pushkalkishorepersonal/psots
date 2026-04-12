@@ -797,7 +797,10 @@ header h1{font-size:20px}
   <header>
     <div style="display:flex;align-items:center;gap:15px">
       <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);" onclick="exitDashboard()">← Back to Lobby</button>
-      <h1 style="font-size:20px;" id="active-group-title">🤖 Admin Dashboard</h1>
+      <div>
+        <h1 style="font-size:20px;" id="active-group-title">🤖 Admin Dashboard</h1>
+        <div id="active-group-id" style="font-size:11px; opacity:0.5; margin-top:2px; font-family:monospace;"></div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="user-info" id="user-email"></span>
@@ -1041,6 +1044,7 @@ function logout() {
 function enterDashboard(groupId, groupTitle) {
   activeGroup = groupId;
   document.getElementById('active-group-title').textContent = '🤖 ' + groupTitle;
+  document.getElementById('active-group-id').textContent = 'Group ID: ' + groupId;
   document.getElementById('lobby-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   loadStatus();
