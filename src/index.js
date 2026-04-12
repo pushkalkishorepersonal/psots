@@ -444,6 +444,7 @@ export default {
 
         const keywords = await getKeywords(env.VIOLATIONS, chatId);
         
+        await env.VIOLATIONS.put('_debug_last_chatid', JSON.stringify({chatId, chatTitle, type: message.chat.type}));
         const groupsJson = await env.VIOLATIONS.get('_groups');
         let groups = groupsJson ? JSON.parse(groupsJson) : {};
         const chatKey = String(chatId);
