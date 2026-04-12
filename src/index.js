@@ -376,10 +376,29 @@ export default {
         }
 
         if (endpoint === 'marketplace' && request.method === 'POST') {
-            const body = await request.json(); 
+            const body = await request.json();
 
-            const verified = await isResidentVerified(body.userId, env.VIOLATIONS);
-            if (!verified) return new Response(JSON.stringify({ error: 'Identity verification required to post.' }), { status: 403 });
+            // Verify identity via Google JWT from Authorization header
+            const authHeader = request.headers.get('Authorization');
+            let verifiedUserId = null;
+
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              try {
+                const token = authHeader.replace('Bearer ', '');
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+                  return new Response(JSON.stringify({ error: 'Session expired. Please log in again.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                }
+                verifiedUserId = payload.sub;
+              } catch(e) {
+                return new Response(JSON.stringify({ error: 'Invalid auth token.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+              }
+            } else {
+              verifiedUserId = body.userId;
+            }
+
+            const verified = await isResidentVerified(verifiedUserId, env.VIOLATIONS);
+            if (!verified) return new Response(JSON.stringify({ error: 'Identity verification required to post.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
 
             const keywords = await getKeywords(env.VIOLATIONS, group);
             const violation = checkViolation(body.description + ' ' + body.item, keywords);

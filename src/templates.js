@@ -567,11 +567,17 @@ export const MARKETPLACE_HTML = `<!DOCTYPE html>
 
         async function submitPost(e) {
             e.preventDefault();
+            const token = localStorage.getItem('psots_token');
             const body = {
-                item: document.getElementById('post-item').value, price: document.getElementById('post-price').value, description: document.getElementById('post-desc').value,
-                userId: localStorage.getItem('psots_userid'), username: localStorage.getItem('psots_username') || 'Resident'
+                item: document.getElementById('post-item').value,
+                price: document.getElementById('post-price').value,
+                description: document.getElementById('post-desc').value,
+                userId: localStorage.getItem('psots_userid'),
+                username: localStorage.getItem('psots_username') || 'Resident'
             };
-            const res = await fetch('/api/marketplace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            const res = await fetch('/api/marketplace', { method: 'POST', headers, body: JSON.stringify(body) });
             const d = await res.json();
             if (d.error) { document.getElementById('post-error').textContent = '⚠️ ' + d.error; document.getElementById('post-error').style.display = 'block'; }
             else { hidePostForm(); load(); }
