@@ -65,19 +65,9 @@ document.getElementById('obBody').innerHTML = `
       <button class="btn btn-ghost" id="btnHideTg">← Other options</button>
     </div>
 
-    <div class="divider">or phone number</div>
-
-    <div id="phoneSection">
-      <div class="field">
-        <label class="field-label">Mobile Number</label>
-        <input class="field-input" id="phoneInp" type="tel" placeholder="+91 98765 43210"/>
-        <div class="field-hint">With country code — e.g. +919876543210</div>
-      </div>
-      
-      <button class="btn btn-jade" id="btnSendOTP">Send OTP</button>
     </div>
 
-    <div id="otpSection" class="hidden">
+    <div id="otpSection" class="hidden" class="hidden">
       <div class="info-box">OTP sent to <strong id="sentTo"></strong></div>
       <div class="field">
         <label class="field-label">Enter OTP</label>
