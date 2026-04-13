@@ -183,6 +183,9 @@
     .footer-tags{display:flex;gap:16px}
     .footer-tag{font-size:12px;color:rgba(255,255,255,0.2)}
     .footer-disclaimer{font-size:11px;color:rgba(255,255,255,0.18);line-height:1.65;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .disc-mobile{display:none}
+    .nav-hamburger{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink);padding:6px 10px;border-radius:8px;line-height:1;transition:background 0.15s;}
+    .nav-hamburger:hover{background:rgba(26,74,58,0.07)}
     .reveal{opacity:0;transform:translateY(28px);transition:opacity 0.7s ease,transform 0.7s ease}
     .reveal.visible{opacity:1;transform:translateY(0)}
     .reveal-delay-1{transition-delay:0.1s}
@@ -197,7 +200,12 @@
     }
     @media(max-width:768px){
       nav{padding:0 1.5rem}
-      .nav-links .nav-link:not(.active){display:none}
+      .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:rgba(250,246,240,0.98);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);flex-direction:column;align-items:stretch;padding:8px;gap:2px;box-shadow:0 8px 24px rgba(26,18,8,0.1);}
+      .nav-links.open{display:flex}
+      .nav-links .nav-link{display:block;width:100%;text-align:left;padding:11px 16px;}
+      .nav-hamburger{display:flex;align-items:center;justify-content:center}
+      .disc-mobile{display:inline}
+      .disc-desktop{display:none}
       .nav-chhath span{display:none}
       .hero-content,.hero-scroll{padding-left:1.5rem;padding-right:1.5rem}
       .stats-strip{padding:0 1.5rem;flex-wrap:wrap}
@@ -216,7 +224,7 @@
 
 <!-- DISCLAIMER -->
 <div class="disclaimer-bar">
-  🏘️ <strong>Resident Initiative</strong> — Independently built by PSOTS residents for community convenience. Not affiliated with or endorsed by the RWA.
+  <span class="disc-mobile">🏘️ Resident Initiative</span><span class="disc-desktop">🏘️ <strong>Resident Initiative</strong> — Independently built by PSOTS residents for community convenience. Not affiliated with or endorsed by the RWA.</span>
 </div>
 
 <!-- NAV -->
@@ -235,6 +243,7 @@
     <button class="nav-link" id="nav-guide" onclick="showPage('guide')">Guide</button>
     <button class="nav-link" onclick="location.href='/residents.html'">Residents</button>
   </div>
+  <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
   <a href="https://chhath.psots.in" class="nav-chhath" target="_blank">🌅 <span>Chhath 2026</span></a>
 </nav>
 
@@ -674,7 +683,23 @@
 </div>
 
 <script>
+  function closeMobileMenu() {
+    const links = document.querySelector('.nav-links');
+    const btn = document.getElementById('navHamburger');
+    if (links) links.classList.remove('open');
+    if (btn) btn.textContent = '☰';
+  }
+
+  function toggleMobileMenu() {
+    const links = document.querySelector('.nav-links');
+    const btn = document.getElementById('navHamburger');
+    const isOpen = links.classList.contains('open');
+    links.classList.toggle('open');
+    btn.textContent = isOpen ? '☰' : '✕';
+  }
+
   function showPage(id) {
+    closeMobileMenu();
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
@@ -693,6 +718,10 @@
   window.addEventListener('scroll', () => {
     const nav = document.getElementById('mainNav');
     nav.classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('nav')) closeMobileMenu();
   });
 
   const observer = new IntersectionObserver((entries) => {
