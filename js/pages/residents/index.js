@@ -21,11 +21,11 @@ import {
 } from '../../config/constants.js';
 
 // ── STATE ─────────────────────────────────────────────────
-let _step          = 1;
-let _selType       = null;   // 'owner' | 'tenant'
-let _selOwnerSt    = null;   // 'resident' | 'non_resident' | 'nri'
-let _flatData      = {};
-let _flatSelector  = null;
+let _step = 1;
+let _selType = null;   // 'owner' | 'tenant'
+let _selOwnerSt = null;   // 'resident' | 'non_resident' | 'nri'
+let _flatData = {};
+let _flatSelector = null;
 let _confirmResult = null;
 
 // ── RENDER SHELL ──────────────────────────────────────────
@@ -270,9 +270,9 @@ function _updateModalStep(n) {
   }
 }
 
-document.getElementById('btnOpenReg').onclick  = () => _goStep(1);
-document.getElementById('obBtnBack').onclick   = () => _goStep(_step - 1);
-document.getElementById('obBtnClose').onclick  = () => {
+document.getElementById('btnOpenReg').onclick = () => _goStep(1);
+document.getElementById('obBtnBack').onclick = () => _goStep(_step - 1);
+document.getElementById('obBtnClose').onclick = () => {
   _closeModal();
   document.getElementById('regHero').classList.remove('hidden');
 };
@@ -285,7 +285,7 @@ document.getElementById('btnGoogle').onclick = async () => {
     _setAlert('loginAlert', 'info', 'Opening Google sign-in...');
     await signInWithPopup(auth, new GoogleAuthProvider());
   } catch (e) {
-    _setAlert('loginAlert', 'error', logger.friendlyMessage(e));
+    _setAlert('loginAlert', 'error', e.message || 'Something went wrong');
   }
 };
 
@@ -341,7 +341,7 @@ document.getElementById('btnSendOTP').onclick = async () => {
     document.getElementById('phoneSection').classList.add('hidden');
     document.getElementById('otpSection').classList.remove('hidden');
   } catch (e) {
-    _setAlert('loginAlert', 'error', logger.friendlyMessage(e));
+    _setAlert('loginAlert', 'error', e.message || 'Something went wrong');
     _btnLoading('btnSendOTP', false, 'Send OTP');
   }
 };
@@ -354,7 +354,7 @@ document.getElementById('btnVerifyOTP').onclick = async () => {
   try {
     await _confirmResult.confirm(otp);
   } catch (e) {
-    _setAlert('loginAlert', 'error', logger.friendlyMessage(e));
+    _setAlert('loginAlert', 'error', e.message || 'Something went wrong');
     _btnLoading('btnVerifyOTP', false, 'Verify OTP');
   }
 };
@@ -385,11 +385,11 @@ document.getElementById('btnBackToDetails').onclick = () => _goStep(3);
 // Go to consent step
 document.getElementById('btnGoConsent').onclick = async () => {
   const name = document.getElementById('resName').value.trim();
-  const vals  = _flatSelector.getValue();
+  const vals = _flatSelector.getValue();
   const phone = document.getElementById('contPhone').value.trim();
 
-  if (!name)  { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
-  if (!vals)  { _setAlert('detailsAlert', 'error', 'Enter your flat number'); return; }
+  if (!name) { _setAlert('detailsAlert', 'error', 'Enter your full name'); return; }
+  if (!vals) { _setAlert('detailsAlert', 'error', 'Enter your flat number'); return; }
   if (!phone) { _setAlert('detailsAlert', 'error', 'Enter your contact phone'); return; }
 
   const { valid, error } = flatService.validate(vals.tower, vals.floor, vals.unit);
@@ -420,7 +420,7 @@ document.getElementById('btnGoConsent').onclick = async () => {
     emName: document.getElementById('emName').value.trim(),
     emPhone: document.getElementById('emPhone').value.trim(),
     emRelation: document.getElementById('emRelation').value.trim(),
-    
+
   };
 
   _goStep(4);
