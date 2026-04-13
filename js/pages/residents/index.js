@@ -128,8 +128,6 @@ document.getElementById('obBody').innerHTML = `
     </div>
 
     <label class="consent-row" style="margin-bottom:1rem">
-      <input type="checkbox" id="isPG"/>
-      <span>This flat has a <strong>PG / Co-living</strong> arrangement</span>
     </label>
 
     <button class="btn btn-jade" id="btnTypeNext" disabled>Next → Flat Details</button>
