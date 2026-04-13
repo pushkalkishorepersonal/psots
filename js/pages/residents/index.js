@@ -420,7 +420,7 @@ document.getElementById('btnGoConsent').onclick = async () => {
     emName: document.getElementById('emName').value.trim(),
     emPhone: document.getElementById('emPhone').value.trim(),
     emRelation: document.getElementById('emRelation').value.trim(),
-    isPG: document.getElementById('isPG').checked,
+    
   };
 
   _goStep(4);
