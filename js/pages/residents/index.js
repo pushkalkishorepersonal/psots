@@ -477,7 +477,6 @@ document.getElementById('btnSubmit').onclick = async () => {
     unit: _flatData.unit, flatNumber: _flatData.flatNumber,
     residentType: _selType, ownerStatus: _selOwnerSt || null,
     role, status, isActive: false, movedOut: false,
-    isPG: _flatData.isPG || false,
     isNRI: _selOwnerSt === 'nri',
     poaName: _flatData.poaName, poaPhone: _flatData.poaPhone,
     leaseStartDate: _flatData.leaseStart, leaseEndDate: _flatData.leaseEnd,
