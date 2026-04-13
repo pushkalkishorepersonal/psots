@@ -13,7 +13,7 @@ import rateLimitService from '../../services/rateLimit.service.js';
 import flatService from '../../services/flat.service.js';
 import { auth } from '../../core/firebase.js';
 import {
-  GoogleAuthProvider, signInWithPopup,
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   RecaptchaVerifier, signInWithPhoneNumber
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
@@ -269,11 +269,25 @@ document.getElementById('obBtnClose').onclick = () => {
 
 // ── EVENT BINDINGS ────────────────────────────────────────
 
+// Handle Google redirect result on page load (mobile redirect flow)
+getRedirectResult(auth).then(result => {
+  if (result?.user) _openModal(); // will proceed via onAuthStateChanged
+}).catch(e => {
+  if (e.code && e.code !== 'auth/no-current-user') {
+    _setAlert('loginAlert', 'error', e.message || 'Google sign-in failed');
+  }
+});
+
 // Google
 document.getElementById('btnGoogle').onclick = async () => {
   try {
     _setAlert('loginAlert', 'info', 'Opening Google sign-in...');
-    await signInWithPopup(auth, new GoogleAuthProvider());
+    const isMobile = /Mobi|Android|iPhone|iPad|IEMobile/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, new GoogleAuthProvider());
+    } else {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    }
   } catch (e) {
     _setAlert('loginAlert', 'error', e.message || 'Something went wrong');
   }
@@ -292,10 +306,17 @@ document.getElementById('btnReqTgOTP').onclick = async () => {
   const u = document.getElementById('tgUser').value.trim().replace('@', '');
   if (!u) { _setAlert('loginAlert', 'error', 'Enter your Telegram username'); return; }
   try {
-    await fetch(`${WORKER_URL}/send-otp?username=${u}`);
-    _setAlert('loginAlert', 'info', 'OTP sent — check @psots_telegram_bot on Telegram');
+    const res = await fetch(`${WORKER_URL}/send-otp?username=${encodeURIComponent(u)}`);
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 404) {
+      _setAlert('loginAlert', 'warn', 'Send <strong>/verify</strong> to @psots_telegram_bot on Telegram first, then try again.');
+    } else if (!res.ok) {
+      _setAlert('loginAlert', 'error', data.message || 'Could not send OTP. Try again.');
+    } else {
+      _setAlert('loginAlert', 'info', 'OTP sent — check @psots_telegram_bot on Telegram');
+    }
   } catch (_) {
-    _setAlert('loginAlert', 'warn', 'Worker URL not configured yet. Update WORKER_URL in constants.js');
+    _setAlert('loginAlert', 'error', 'Network error. Please try again.');
   }
 };
 
@@ -305,16 +326,18 @@ document.getElementById('btnVerifyTg').onclick = async () => {
   const otp = document.getElementById('tgOTP').value.trim();
   if (!u || !otp) { _setAlert('loginAlert', 'error', 'Enter username and OTP'); return; }
   try {
-    const res = await fetch(`${WORKER_URL}/verify-otp?username=${u}&otp=${otp}`);
-    const data = await res.json();
+    const res = await fetch(`${WORKER_URL}/verify-otp?username=${encodeURIComponent(u)}&otp=${encodeURIComponent(otp)}`);
+    const data = await res.json().catch(() => ({}));
     if (data.token) {
       const { signInWithCustomToken } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
       await signInWithCustomToken(auth, data.token);
+    } else if (res.status === 401) {
+      _setAlert('loginAlert', 'error', 'Invalid or expired OTP. Request a new one.');
     } else {
-      _setAlert('loginAlert', 'error', 'Invalid OTP. Try again.');
+      _setAlert('loginAlert', 'error', data.message || 'Verification failed. Try again.');
     }
   } catch (_) {
-    _setAlert('loginAlert', 'warn', 'Telegram verification requires Worker URL to be configured.');
+    _setAlert('loginAlert', 'error', 'Network error. Please try again.');
   }
 };
 
@@ -418,7 +441,7 @@ document.getElementById('btnGoConsent').onclick = async () => {
 
 // Submit registration
 document.getElementById('btnSubmit').onclick = async () => {
-  const user = session.getUser();
+  const user = session.user;
   if (!user) { Toast.error('Session expired. Please sign in again.'); _goStep(1); return; }
 
   const { allowed, waitSeconds } = await rateLimitService.check(user.uid);

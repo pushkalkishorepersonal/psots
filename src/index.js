@@ -15,11 +15,44 @@ import { sendMessage, deleteTelegramMessage, parseListingWithGemini, fetchChatMe
 const ADMIN_ID = 989358143;
 const GOOGLE_CLIENT_ID_VALUE = "774636811164-c9n9n8a27c9d0fbhg7e6vie759gq1sun.apps.googleusercontent.com";
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
+
+async function createFirebaseCustomToken(uid, env) {
+  if (!env.FIREBASE_SA_EMAIL || !env.FIREBASE_SA_KEY) return null;
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const header = { alg: 'RS256', typ: 'JWT' };
+    const payload = {
+      iss: env.FIREBASE_SA_EMAIL, sub: env.FIREBASE_SA_EMAIL,
+      aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
+      iat: now, exp: now + 3600, uid,
+    };
+    const b64url = o => btoa(JSON.stringify(o)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const input = `${b64url(header)}.${b64url(payload)}`;
+    const pem = env.FIREBASE_SA_KEY.replace(/\\n/g, '\n');
+    const der = Uint8Array.from(atob(pem.replace(/-----[^-]+-----|[\n\r]/g, '')), c => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey('pkcs8', der.buffer,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(input));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    return `${input}.${sigB64}`;
+  } catch (e) { console.error('custom token error:', e); return null; }
+}
+
 export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
       const pathname = url.pathname;
+
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { headers: CORS });
+      }
 
       if (pathname === '/' || pathname === '/index.html') {
           return new Response(GRAND_LOBBY_HTML(env.GOOGLE_CLIENT_ID), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
@@ -439,6 +472,41 @@ export default {
         }
       }
 
+      // ── OTP ENDPOINTS (Telegram login) ────────────────────
+      if (pathname === '/send-otp') {
+        const username = (url.searchParams.get('username') || '').toLowerCase().replace('@', '');
+        if (!username) return new Response(JSON.stringify({ error: 'username required' }), { status: 400, headers: CORS });
+        const chatIdStr = await env.VIOLATIONS.get(`tg_chatid_${username}`);
+        if (!chatIdStr) {
+          return new Response(JSON.stringify({ error: 'not_found', message: 'Send /verify to @psots_telegram_bot first' }), { status: 404, headers: CORS });
+        }
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await env.VIOLATIONS.put(`tg_otp_${username}`, otp, { expirationTtl: 300 });
+        const botToken = await getBotToken(env.VIOLATIONS);
+        if (botToken) {
+          await sendMessage(parseInt(chatIdStr), `🔐 Your PSOTS login OTP: <b>${otp}</b>\n\nValid for 5 minutes. Do not share with anyone.`, botToken);
+        }
+        return new Response(JSON.stringify({ ok: true }), { headers: CORS });
+      }
+
+      if (pathname === '/verify-otp') {
+        const username = (url.searchParams.get('username') || '').toLowerCase().replace('@', '');
+        const otp = (url.searchParams.get('otp') || '').trim();
+        if (!username || !otp) return new Response(JSON.stringify({ error: 'username and otp required' }), { status: 400, headers: CORS });
+        const storedOtp = await env.VIOLATIONS.get(`tg_otp_${username}`);
+        if (!storedOtp || storedOtp !== otp) {
+          return new Response(JSON.stringify({ error: 'invalid_otp' }), { status: 401, headers: CORS });
+        }
+        await env.VIOLATIONS.delete(`tg_otp_${username}`);
+        const userIdStr = await env.VIOLATIONS.get(`tg_userid_${username}`);
+        const uid = `tg_${userIdStr || username}`;
+        const token = await createFirebaseCustomToken(uid, env);
+        if (!token) {
+          return new Response(JSON.stringify({ error: 'service_account_not_configured', message: 'Add FIREBASE_SA_EMAIL and FIREBASE_SA_KEY as Worker secrets' }), { status: 503, headers: CORS });
+        }
+        return new Response(JSON.stringify({ token }), { headers: CORS });
+      }
+
       if (request.method === 'POST' && !pathname.startsWith('/api/')) {
         const update = await request.json();
 
@@ -542,6 +610,19 @@ export default {
         // Handle /start command for registration verification
         if (text === '/start' || text.startsWith('/start')) {
             await sendMessage(chatId, `✅ <b>Group Linked Successfully!</b>\n\n<b>Title:</b> ${chatTitle}\n<b>ID:</b> <code>${chatId}</code>\n\nAdmins can now manage this group via the <a href="https://telegram.psots.in/admin">PSOTS Dashboard</a>.`, botToken);
+            return new Response('OK');
+        }
+
+        // Handle /verify — links Telegram identity for psots.in login
+        if (text === '/verify' || text.startsWith('/verify ')) {
+            const tgUsername = (message.from.username || '').toLowerCase();
+            if (!tgUsername) {
+                await sendMessage(chatId, '❌ Please set a Telegram username in Settings → Edit Profile first, then send /verify again.', botToken);
+                return new Response('OK');
+            }
+            await env.VIOLATIONS.put(`tg_chatid_${tgUsername}`, String(chatId), { expirationTtl: 86400 * 30 });
+            await env.VIOLATIONS.put(`tg_userid_${tgUsername}`, String(userId), { expirationTtl: 86400 * 30 });
+            await sendMessage(chatId, `✅ <b>Linked @${message.from.username}!</b>\n\nYou can now log in to <a href="https://psots.in/residents">psots.in/residents</a> with Telegram:\n1. Click <b>Continue with Telegram</b>\n2. Enter <b>${message.from.username}</b> as username\n3. Click <b>Get OTP</b> — you'll receive it here`, botToken);
             return new Response('OK');
         }
 
