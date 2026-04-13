@@ -73,7 +73,7 @@ document.getElementById('obBody').innerHTML = `
         <input class="field-input" id="phoneInp" type="tel" placeholder="+91 98765 43210"/>
         <div class="field-hint">With country code — e.g. +919876543210</div>
       </div>
-      <div id="recaptcha-container"></div>
+      
       <button class="btn btn-jade" id="btnSendOTP">Send OTP</button>
     </div>
 
